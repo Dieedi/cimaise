@@ -1,0 +1,10 @@
+{
+    "resolution": {
+        "width": 1280,
+        "height": 800
+    },
+    "frame": false,
+    "canvas": {
+        "zoomFactor": 1.05
+    }
+}

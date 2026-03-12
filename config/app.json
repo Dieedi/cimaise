@@ -1,0 +1,8 @@
+{
+    "server_url": "http://localhost:4200",
+    "mouse": {
+        "drag_image": 0,
+        "pan_view": 1,
+        "menu_open": 2
+    }
+}
