@@ -15,6 +15,8 @@ export class App implements AfterViewInit{
 
   private stage!: Konva.Stage;
   private layer!: Konva.Layer;
+  private imgbb!: Konva.Group;
+  private imgbbBg!: Konva.Rect;
   private isPanning: boolean = false;
 
   /** Initialize the Konva stage, layer, and all canvas interactions */
@@ -32,11 +34,52 @@ export class App implements AfterViewInit{
     // add a draw layer
     this.layer = new Konva.Layer();
     this.stage.add(this.layer);
+    this.imgbb = new Konva.Group({
+      x: 0,
+      y: 0,
+      draggable: false,
+      id: 'imgbb'
+    });
+    this.layer.add(this.imgbb);
+    this.imgbbBg = new Konva.Rect({
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 10,
+      fill: '#2e2e2e'
+    });
+    this.imgbb.add(this.imgbbBg);
 
+    this.updateImagesBoundingBox();
     this.setupMouseClick();
     this.setupZoom();
     this.setupPan();
     this.setupDragAndDrop();
+  }
+
+  private updateImagesBoundingBox(): void {
+    const nodes = this.imgbb.getChildren(node => node !== this.imgbbBg);
+    if (nodes.length === 0) {
+      this.imgbbBg.visible(false);
+    } else {
+      const padding = 10;
+      // get bounds
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+
+      nodes.forEach(node => {
+        minX = Math.min(minX, node.x());
+        minY = Math.min(minY, node.y());
+        maxX = Math.max(maxX, node.x() + node.width());
+        maxY = Math.max(maxY, node.y() + node.height());
+      });
+
+      this.imgbbBg.position({ x: minX - padding, y: minY - padding });
+      this.imgbbBg.size({ width: maxX - minX + padding * 2, height: maxY - minY + padding * 2});
+      this.imgbbBg.visible(true);
+    }
   }
 
   /** Handle mouse button events (pan toggle, future: selection, context menu) */
@@ -126,18 +169,26 @@ export class App implements AfterViewInit{
           reader.onload = () => {
             const img = new Image();
             img.onload = () => {
+              const stagePos = this.stage.position();
+              const scale = this.stage.scaleX();
+              const dropX = (e.pageX - stagePos.x) / scale;
+              const dropY = (e.pageY - stagePos.y) / scale;
               const kImg = new Konva.Image({
                 image: img,
                 draggable: true,
-                x: e.pageX - img.width / 2,
-                y: e.pageY - img.height / 2,
+                x: dropX - img.width / 2,
+                y: dropY - img.height / 2,
               });
               kImg.on('dragstart', (e) => {
                 if (e.evt.button !== MOUSE.drag_image) {
                   kImg.stopDrag();
                 }
               })
-              this.layer.add(kImg);
+              kImg.on('dragmove', (e) => {
+                this.updateImagesBoundingBox();
+              })
+              this.imgbb.add(kImg);
+              this.updateImagesBoundingBox();
             };
             img.src = reader.result as string;
           };
