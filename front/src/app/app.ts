@@ -1,4 +1,4 @@
-import { Component, viewChild, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
 import Konva from 'konva';
 import windowConfig from '../../../config/window.json';
 import appConfig from '../../../config/app.json';
@@ -33,16 +33,6 @@ export class App implements AfterViewInit{
     this.layer = new Konva.Layer();
     this.stage.add(this.layer);
 
-    const mouseCfg = appConfig.mouse;
-
-    const rect = new Konva.Rect({
-      x: 100,
-      y: 100,
-      width: 200,
-      height: 150,
-      fill: '#3498db',
-    });
-    this.layer.add(rect);
     this.setupMouseClick();
     this.setupZoom();
     this.setupPan();
@@ -54,34 +44,24 @@ export class App implements AfterViewInit{
     this.stage.on('mousedown', (e) => {
       switch (e.evt.button){
         case MOUSE.drag_image:
-          console.log("Left button clicked.");
           break;
         case MOUSE.pan_view:
-          console.log("Middle button clicked.");
           this.isPanning = true;
           break;
         case MOUSE.menu_open:
-          console.log("Right button clicked.");
           break;
-        default:
-          console.log(`Unknown button code: ${e.evt.button}`);
       }
     })
 
     this.stage.on('mouseup', (e) => {
       switch (e.evt.button){
         case MOUSE.drag_image:
-          console.log("Left button clicked.");
           break;
         case MOUSE.pan_view:
-          console.log("Middle button clicked.");
           this.isPanning = false;
           break;
         case MOUSE.menu_open:
-          console.log("Right button clicked.");
           break;
-        default:
-          console.log(`Unknown button code: ${e.evt.button}`);
       }
     })
   }
@@ -141,7 +121,6 @@ export class App implements AfterViewInit{
       const files = e.dataTransfer?.files;
       if (!files) return;
       Array.from(files).forEach(file => {
-        console.log(file.name, file.type, file.size);
         if (file.type.startsWith('image/')) {
           const reader = new FileReader();
           reader.onload = () => {
