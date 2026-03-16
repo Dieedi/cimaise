@@ -18,6 +18,9 @@ export class CanvasService {
     return this._imgbb;
   }
   private _imgbbBg!: Konva.Rect;
+  public get imgbbBg(): Konva.Rect {
+    return this._imgbbBg;
+  }
 
   init(container: HTMLDivElement): void {
 

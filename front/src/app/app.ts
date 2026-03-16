@@ -47,6 +47,12 @@ export class App implements AfterViewInit{
     this.stage.on('mousedown', (e) => {
       switch (e.evt.button){
         case MOUSE.drag_image:
+          this.selectionService.isSelecting = true;
+          const stagePos = this.stage.position();
+          const scale = this.stage.scaleX();
+          const currX = (e.evt.pageX - stagePos.x) / scale;
+          const currY = (e.evt.pageY - stagePos.y) / scale;
+          this.selectionService.startBoxSelect(currX, currY);
           break;
         case MOUSE.pan_view:
           this.panService.isPanning = true;
@@ -59,6 +65,7 @@ export class App implements AfterViewInit{
     this.stage.on('mouseup', (e) => {
       switch (e.evt.button){
         case MOUSE.drag_image:
+          this.selectionService.isSelecting = false;
           // click select on mouseup to allow box select draw on mousedown
           const target = e.target;
           if (target instanceof Konva.Image) {
@@ -68,7 +75,7 @@ export class App implements AfterViewInit{
               this.selectionService.select(target);
             }
           } else {
-            this.selectionService.clearSelection();
+            this.selectionService.endBoxSelect();
           }
           break;
         case MOUSE.pan_view:
@@ -76,6 +83,16 @@ export class App implements AfterViewInit{
           break;
         case MOUSE.menu_open:
           break;
+      }
+    })
+
+    this.stage.on('mousemove', (e) => {
+      if (this.selectionService.isSelecting) {
+        const stagePos = this.stage.position();
+        const scale = this.stage.scaleX();
+        const currX = (e.evt.pageX - stagePos.x) / scale;
+        const currY = (e.evt.pageY - stagePos.y) / scale;
+        this.selectionService.updateBoxSize(currX, currY);
       }
     })
   }

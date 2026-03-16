@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CanvasService } from './canvas';
 import Konva from 'konva';
+import { SelectionService } from './selection';
 
 @Injectable({
   providedIn: 'root',
@@ -8,7 +9,10 @@ import Konva from 'konva';
 export class PanService {
   public isPanning: boolean = false;
 
-  constructor(private canvasService: CanvasService) {}
+  constructor(
+    private canvasService: CanvasService,
+    private selectionService: SelectionService,
+  ) {}
   private get stage(): Konva.Stage{
     return this.canvasService.stage;
   }
