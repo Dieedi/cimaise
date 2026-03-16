@@ -1,20 +1,39 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const path = require('path');
 const windowConfig = require('../../config/window.json');
 const appConfig = require('../../config/app.json');
+const fs = require('fs');
 
 const resolution = windowConfig.resolution;
+let win;
 const createWindow = () => {
-    const win = new BrowserWindow({
+    win = new BrowserWindow({
         width: resolution.width,
         height: resolution.height,
-        frame: windowConfig.frame
+        frame: windowConfig.frame,
+        webPreferences: {
+            preload: path.join(__dirname, '/preload.js'),
+        }
     })
-
     win.loadURL(appConfig.server_url);
 }
 
 app.whenReady().then(createWindow)
 
+ipcMain.handle('save-file', async (_event, data) => {
+    const result = await dialog.showSaveDialog(win, {
+        title: 'save',
+        defaultPath: 'my_board.moody',
+        filters: [{ name: 'Moody Board', extensions: ['moody'] }],
+    });
+    if (result.canceled === true) {
+        return;
+    }
+    fs.writeFileSync(result.filePath, data);
+})
+ipcMain.handle('open-file', async (_event, data) => {
+
+})
 app.on('window-all-closed', () => {
     app.quit();
 })

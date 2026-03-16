@@ -6,6 +6,7 @@ import { ZoomService } from './services/zoom';
 import { PanService } from './services/pan';
 import { DropService } from './services/drop';
 import { SelectionService } from './services/selection';
+import { SaveService } from './services/save';
 const MOUSE = appConfig.mouse;
 
 @Component({
@@ -23,6 +24,7 @@ export class App implements AfterViewInit{
     private panService: PanService,
     private dropService: DropService,
     private selectionService: SelectionService,
+    private saveService: SaveService,
   ) {}
   private get stage(): Konva.Stage{
     return this.canvasService.stage;
@@ -40,6 +42,12 @@ export class App implements AfterViewInit{
     this.zoomService.setupZoom();
     this.panService.setupPan();
     this.dropService.setupDragAndDrop();
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        this.saveService.save();
+      }
+    });
   }
 
   /** Handle mouse button events (pan toggle, future: selection, context menu) */
