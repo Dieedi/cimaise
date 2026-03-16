@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { CanvasService } from './canvas';
 import Konva from 'konva';
+import canvasConfig from '../../../../config/canvas.json';
+const SELECTION = canvasConfig.selection;
 
 @Injectable({
   providedIn: 'root',
@@ -23,8 +25,8 @@ export class SelectionService {
 
   init(): void {
     this.transformer = new Konva.Transformer({
-    borderStroke: '#6dffce',
-    borderStrokeWidth: 2,
+    borderStroke: SELECTION.borderColor,
+    borderStrokeWidth: SELECTION.borderWidth,
     anchorSize: 0,
     rotateEnabled: false,
     resizeEnabled: false,
@@ -36,9 +38,9 @@ export class SelectionService {
       y: 0,
       width: 1,
       height: 1,
-      stroke: '#c9c9c9ad',
-      strokeWidth: 1,
-      fill: '#2e2e2ec0',
+      stroke: SELECTION.boxStroke,
+      strokeWidth: SELECTION.boxStrokeWidth,
+      fill: SELECTION.boxFill,
       globalCompositeOperation: 'xor', // multiply
     })
   }
@@ -79,23 +81,29 @@ export class SelectionService {
     this.boxSelectRect.height(currentPosY - this.startY);
   }
 
-  public endBoxSelect() {
+  public endBoxSelect(): boolean {
     const boxRect = this.boxSelectRect.getClientRect();
-    const images = this.canvasService.imgbb.getChildren(
-      node => node !== this.canvasService.imgbbBg
-    );
-    this.clearSelection();
-    images.forEach(node => {
-      const nodeRect = node.getClientRect();
-      if (this.haveIntersection(nodeRect, boxRect)) {
-        this.selectedNodes.push(node);
-      }
-    });
-    this.transformer.setNodes(this.selectedNodes);
+    const hasSize = boxRect.width > SELECTION.minBoxSize && boxRect.height > SELECTION.minBoxSize;
+
+    if (hasSize) {
+      const images = this.canvasService.imgbb.getChildren(
+        node => node !== this.canvasService.imgbbBg
+      );
+      this.clearSelection();
+      images.forEach(node => {
+        const nodeRect = node.getClientRect();
+        if (this.haveIntersection(nodeRect, boxRect)) {
+          this.selectedNodes.push(node);
+        }
+      });
+      this.transformer.setNodes(this.selectedNodes);
+    }
 
     this.boxSelectRect.width(1);
     this.boxSelectRect.height(1);
     this.boxSelectRect.remove();
+
+    return hasSize;
   }
 
   private haveIntersection(

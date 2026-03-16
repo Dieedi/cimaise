@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { CanvasService } from './canvas';
 import Konva from 'konva';
 import JSZip from 'jszip';
+import appConfig from '../../../../config/app.json';
 
 @Injectable({
   providedIn: 'root',
@@ -30,7 +31,7 @@ export class SaveService {
       };
     });
     const boardData = {
-      version: '1.0',
+      version: appConfig.save.formatVersion,
       canvas: {
         x: this.canvasService.stage.x(),
         y: this.canvasService.stage.y(),

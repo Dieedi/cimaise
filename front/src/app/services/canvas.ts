@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import Konva from 'konva';
+import canvasConfig from '../../../../config/canvas.json';
 
 @Injectable({
   providedIn: 'root',
@@ -46,7 +47,7 @@ export class CanvasService {
       y: 0,
       width: 10,
       height: 10,
-      fill: '#2e2e2e'
+      fill: canvasConfig.imgbb.bgColor
     });
     this._imgbb.add(this._imgbbBg);
 
@@ -57,7 +58,7 @@ export class CanvasService {
     if (nodes.length === 0) {
       this._imgbbBg.visible(false);
     } else {
-      const padding = 2;
+      const padding = canvasConfig.imgbb.padding;
       // get bounds
       let minX = Infinity;
       let minY = Infinity;

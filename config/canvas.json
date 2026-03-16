@@ -1,0 +1,14 @@
+{
+    "imgbb": {
+        "padding": 2,
+        "bgColor": "#2e2e2e"
+    },
+    "selection": {
+        "borderColor": "#6dffce",
+        "borderWidth": 2,
+        "boxStroke": "#c9c9c9ad",
+        "boxStrokeWidth": 1,
+        "boxFill": "#2e2e2ec0",
+        "minBoxSize": 5
+    }
+}

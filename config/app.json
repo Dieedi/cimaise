@@ -4,5 +4,14 @@
         "drag_image": 0,
         "pan_view": 1,
         "menu_open": 2
+    },
+    "save": {
+        "defaultFilename": "my_board.moody",
+        "fileExtension": "moody",
+        "fileTypeName": "Moody Board",
+        "formatVersion": "1.0"
+    },
+    "shortcuts": {
+        "save": "s"
     }
 }

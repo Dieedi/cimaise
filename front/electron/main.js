@@ -23,8 +23,8 @@ app.whenReady().then(createWindow)
 ipcMain.handle('save-file', async (_event, data) => {
     const result = await dialog.showSaveDialog(win, {
         title: 'save',
-        defaultPath: 'my_board.moody',
-        filters: [{ name: 'Moody Board', extensions: ['moody'] }],
+        defaultPath: appConfig.save.defaultFilename,
+        filters: [{ name: appConfig.save.fileTypeName, extensions: [appConfig.save.fileExtension] }],
     });
     if (result.canceled === true) {
         return;

@@ -43,7 +43,7 @@ export class App implements AfterViewInit{
     this.panService.setupPan();
     this.dropService.setupDragAndDrop();
     document.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.key === 's') {
+      if (e.ctrlKey && e.key === appConfig.shortcuts.save) {
         e.preventDefault();
         this.saveService.save();
       }
@@ -74,16 +74,19 @@ export class App implements AfterViewInit{
       switch (e.evt.button){
         case MOUSE.drag_image:
           this.selectionService.isSelecting = false;
-          // click select on mouseup to allow box select draw on mousedown
-          const target = e.target;
-          if (target instanceof Konva.Image) {
-            if (e.evt.ctrlKey) {
-              this.selectionService.toggleSelect(target);
+          const hasBoxSelected = this.selectionService.endBoxSelect();
+          if (!hasBoxSelected) {
+            // click select on mouseup to allow box select draw on mousedown
+            const target = e.target;
+            if (target instanceof Konva.Image) {
+              if (e.evt.ctrlKey) {
+                this.selectionService.toggleSelect(target);
+              } else {
+                this.selectionService.select(target);
+              }
             } else {
-              this.selectionService.select(target);
+              this.selectionService.clearSelection();
             }
-          } else {
-            this.selectionService.endBoxSelect();
           }
           break;
         case MOUSE.pan_view:
