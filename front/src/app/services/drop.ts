@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { CanvasService } from './canvas';
 import { FrameService } from './frame';
+import { KeyBindingService } from './keybinding';
 import Konva from 'konva';
-import appConfig from '../../../../config/app.json';
-const MOUSE = appConfig.mouse;
 
 @Injectable({
   providedIn: 'root',
@@ -12,6 +11,7 @@ export class DropService {
   constructor(
     private canvasService: CanvasService,
     private frameService: FrameService,
+    private keybinding: KeyBindingService,
   ) {}
   private get stage(): Konva.Stage{
     return this.canvasService.stage;
@@ -47,7 +47,7 @@ export class DropService {
                 y: dropY - img.height / 2,
               });
               kImg.on('dragstart', (e) => {
-                if (e.evt.button !== MOUSE.drag_image) {
+                if (e.evt.button !== this.keybinding.getMouseButton('dragImage')) {
                   kImg.stopDrag();
                 }
               })

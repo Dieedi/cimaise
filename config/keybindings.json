@@ -12,5 +12,19 @@
             "label": "New Frame",
             "shortcut": "f"
         }
+    },
+    "mouse": {
+        "dragImage": {
+            "label": "Drag / Select",
+            "button": 0
+        },
+        "panView": {
+            "label": "Pan View",
+            "button": 1
+        },
+        "menuOpen": {
+            "label": "Context Menu",
+            "button": 2
+        }
     }
 }

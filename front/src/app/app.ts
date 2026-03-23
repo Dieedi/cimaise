@@ -1,7 +1,6 @@
 import { Component, AfterViewInit, ElementRef, ViewChild, ChangeDetectorRef } from '@angular/core';
 import Konva from 'konva';
 import { CanvasService } from './services/canvas';
-import appConfig from '../../../config/app.json';
 import { ZoomService } from './services/zoom';
 import { PanService } from './services/pan';
 import { DropService } from './services/drop';
@@ -11,7 +10,6 @@ import { OpenService } from './services/open';
 import { FrameService } from './services/frame';
 import { ContextMenuService, MenuItem } from './services/context-menu';
 import { KeyBindingService } from './services/keybinding';
-const MOUSE = appConfig.mouse;
 
 @Component({
   selector: 'app-root',
@@ -85,7 +83,7 @@ export class App implements AfterViewInit{
       const worldY = (e.evt.pageY - stagePos.y) / scale;
 
       switch (e.evt.button){
-        case MOUSE.drag_image:
+        case this.keybinding.getMouseButton('dragImage'):
           // Try frame edge resize first
           if (this.frameService.startResize(worldX, worldY)) {
             break;
@@ -93,17 +91,17 @@ export class App implements AfterViewInit{
           this.selectionService.isSelecting = true;
           this.selectionService.startBoxSelect(worldX, worldY);
           break;
-        case MOUSE.pan_view:
+        case this.keybinding.getMouseButton('panView'):
           this.panService.isPanning = true;
           break;
-        case MOUSE.menu_open:
+        case this.keybinding.getMouseButton('menuOpen'):
           break;
       }
     })
 
     this.stage.on('mouseup', (e) => {
       switch (e.evt.button){
-        case MOUSE.drag_image:
+        case this.keybinding.getMouseButton('dragImage'):
           if (this.frameService.isResizing) {
             this.frameService.endResize();
             break;
@@ -132,10 +130,10 @@ export class App implements AfterViewInit{
             }
           }
           break;
-        case MOUSE.pan_view:
+        case this.keybinding.getMouseButton('panView'):
           this.panService.isPanning = false;
           break;
-        case MOUSE.menu_open:
+        case this.keybinding.getMouseButton('menuOpen'):
           break;
       }
     })
@@ -250,7 +248,7 @@ export class App implements AfterViewInit{
     }) as Konva.Image;
 
     clone.on('dragstart', (e: Konva.KonvaEventObject<MouseEvent>) => {
-      if (e.evt.button !== MOUSE.drag_image) {
+      if (e.evt.button !== this.keybinding.getMouseButton('dragImage')) {
         clone.stopDrag();
       }
     });

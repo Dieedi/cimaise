@@ -1,19 +1,9 @@
 {
     "server_url": "http://localhost:4200",
-    "mouse": {
-        "drag_image": 0,
-        "pan_view": 1,
-        "menu_open": 2
-    },
     "save": {
         "defaultFilename": "my_board.moody",
         "fileExtension": "moody",
         "fileTypeName": "Moody Board",
         "formatVersion": "1.1"
-    },
-    "shortcuts": {
-        "save": "s",
-        "open": "o",
-        "newFrame": "f"
     }
 }

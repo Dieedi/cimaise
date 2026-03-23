@@ -6,6 +6,11 @@ interface ActionBinding {
   shortcut: string;
 }
 
+interface MouseBinding {
+  label: string;
+  button: number;
+}
+
 interface ParsedBinding {
   ctrl: boolean;
   shift: boolean;
@@ -20,6 +25,7 @@ type ActionHandler = () => void;
 })
 export class KeyBindingService {
   private bindings: Map<string, ParsedBinding> = new Map();
+  private mouseBindings: Map<string, number> = new Map();
   private handlers: Map<string, ActionHandler> = new Map();
 
   constructor() {
@@ -31,6 +37,11 @@ export class KeyBindingService {
     const actions = keybindingsConfig.actions as Record<string, ActionBinding>;
     for (const [action, binding] of Object.entries(actions)) {
       this.bindings.set(action, this.parseShortcut(binding.shortcut));
+    }
+
+    const mouse = keybindingsConfig.mouse as Record<string, MouseBinding>;
+    for (const [action, binding] of Object.entries(mouse)) {
+      this.mouseBindings.set(action, binding.button);
     }
   }
 
@@ -84,6 +95,15 @@ export class KeyBindingService {
       e.shiftKey === binding.shift &&
       e.altKey === binding.alt
     );
+  }
+
+  /** Get the mouse button number for a named mouse action */
+  public getMouseButton(action: string): number {
+    const button = this.mouseBindings.get(action);
+    if (button === undefined) {
+      throw new Error(`Unknown mouse action: ${action}`);
+    }
+    return button;
   }
 
   /** Get the display label for a shortcut (e.g. "Ctrl+S") */

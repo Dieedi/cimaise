@@ -2,12 +2,10 @@ import { Injectable } from '@angular/core';
 import { CanvasService } from './canvas';
 import { SelectionService } from './selection';
 import { FrameService } from './frame';
+import { KeyBindingService } from './keybinding';
 import Konva from 'konva';
 import JSZip from 'jszip';
-import appConfig from '../../../../config/app.json';
 import { migrateBoard } from './migrations';
-
-const MOUSE = appConfig.mouse;
 
 @Injectable({
   providedIn: 'root',
@@ -17,6 +15,7 @@ export class OpenService {
     private canvasService: CanvasService,
     private selectionService: SelectionService,
     private frameService: FrameService,
+    private keybinding: KeyBindingService,
   ) {}
 
   public async open(): Promise<void> {
@@ -82,7 +81,7 @@ export class OpenService {
           rotation: imgData.rotation,
         });
         kImg.on('dragstart', (e) => {
-          if (e.evt.button !== MOUSE.drag_image) {
+          if (e.evt.button !== this.keybinding.getMouseButton('dragImage')) {
             kImg.stopDrag();
           }
         });
