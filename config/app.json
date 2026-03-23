@@ -1,5 +1,10 @@
 {
     "server_url": "http://localhost:4200",
+    "api": {
+        "defaultUrl": "http://localhost:8080",
+        "healthEndpoint": "/actuator/health",
+        "heartbeatIntervalMs": 10000
+    },
     "save": {
         "defaultFilename": "my_board.moody",
         "fileExtension": "moody",
