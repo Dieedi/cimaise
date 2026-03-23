@@ -1,8 +1,15 @@
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
-const windowConfig = require('../../config/window.json');
-const appConfig = require('../../config/app.json');
 const fs = require('fs');
+
+// In packaged mode, config is bundled next to the app
+const isDev = !app.isPackaged;
+const configPath = isDev
+    ? path.join(__dirname, '../../config')
+    : path.join(process.resourcesPath, 'config');
+
+const windowConfig = require(path.join(configPath, 'window.json'));
+const appConfig = require(path.join(configPath, 'app.json'));
 
 const resolution = windowConfig.resolution;
 let win;
@@ -15,7 +22,12 @@ const createWindow = () => {
             preload: path.join(__dirname, '/preload.js'),
         }
     })
-    win.loadURL(appConfig.server_url);
+
+    if (isDev) {
+        win.loadURL(appConfig.server_url);
+    } else {
+        win.loadFile(path.join(__dirname, '../dist/front/browser/index.html'));
+    }
 }
 
 app.whenReady().then(createWindow)
