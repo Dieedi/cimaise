@@ -1,0 +1,16 @@
+{
+    "actions": {
+        "save": {
+            "label": "Save",
+            "shortcut": "ctrl+s"
+        },
+        "open": {
+            "label": "Open",
+            "shortcut": "ctrl+o"
+        },
+        "newFrame": {
+            "label": "New Frame",
+            "shortcut": "f"
+        }
+    }
+}

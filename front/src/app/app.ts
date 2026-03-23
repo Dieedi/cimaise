@@ -10,6 +10,7 @@ import { SaveService } from './services/save';
 import { OpenService } from './services/open';
 import { FrameService } from './services/frame';
 import { ContextMenuService, MenuItem } from './services/context-menu';
+import { KeyBindingService } from './services/keybinding';
 const MOUSE = appConfig.mouse;
 
 @Component({
@@ -31,6 +32,7 @@ export class App implements AfterViewInit{
     private openService: OpenService,
     private frameService: FrameService,
     public contextMenu: ContextMenuService,
+    private keybinding: KeyBindingService,
     private cdr: ChangeDetectorRef,
   ) {}
   private get stage(): Konva.Stage{
@@ -62,19 +64,11 @@ export class App implements AfterViewInit{
       }
     });
 
-    document.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.key === appConfig.shortcuts.save) {
-        e.preventDefault();
-        this.saveService.save();
-      }
-      if (e.ctrlKey && e.key === appConfig.shortcuts.open) {
-        e.preventDefault();
-        this.openService.open();
-      }
-      if (e.key === appConfig.shortcuts.newFrame) {
-        this.frameService.createFrame();
-      }
-    });
+    // Register keyboard shortcuts via KeyBindingService
+    this.keybinding.register('save', () => this.saveService.save());
+    this.keybinding.register('open', () => this.openService.open());
+    this.keybinding.register('newFrame', () => this.frameService.createFrame());
+    this.keybinding.listen();
   }
 
   /** Handle mouse button events (pan toggle, future: selection, context menu) */
