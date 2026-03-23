@@ -1,5 +1,47 @@
 <div #canvasContainer class="canvas-container"></div>
 
+@if (keybindingsPanelOpen) {
+  <div class="keybindings-overlay" (mousedown)="closeKeybindingsPanel()"></div>
+  <div class="keybindings-panel">
+    <div class="keybindings-header">
+      <span>Keybindings</span>
+      <div class="keybindings-close" (click)="closeKeybindingsPanel()">&#x2715;</div>
+    </div>
+
+    <div class="keybindings-body">
+      <div class="keybindings-section-title">Keyboard</div>
+      @for (entry of keybindingEntries; track entry.action) {
+        @if (entry.type === 'keyboard') {
+          <div class="keybindings-row" [class.capturing]="capturingAction === entry.action">
+            <span class="keybindings-label">{{ entry.label }}</span>
+            <button
+              class="keybindings-key"
+              (click)="startCapture(entry, $event)"
+            >
+              {{ capturingAction === entry.action ? 'Press a key...' : entry.display }}
+            </button>
+          </div>
+        }
+      }
+
+      <div class="keybindings-section-title">Mouse</div>
+      @for (entry of keybindingEntries; track entry.action) {
+        @if (entry.type === 'mouse') {
+          <div class="keybindings-row" [class.capturing]="capturingAction === entry.action">
+            <span class="keybindings-label">{{ entry.label }}</span>
+            <button
+              class="keybindings-key"
+              (mousedown)="startCapture(entry, $event)"
+            >
+              {{ capturingAction === entry.action ? 'Click a button...' : entry.display }}
+            </button>
+          </div>
+        }
+      }
+    </div>
+  </div>
+}
+
 @if (contextMenu.visible) {
   <div
     #contextMenuEl

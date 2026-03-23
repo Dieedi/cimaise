@@ -23,6 +23,13 @@ export class SelectionService {
   private startX!: number;
   private startY!: number;
 
+  /** Get currently selected images */
+  public getSelected(): Konva.Image[] {
+    return this.selectedNodes.filter(
+      (n): n is Konva.Image => n instanceof Konva.Image
+    );
+  }
+
   init(): void {
     this.transformer = new Konva.Transformer({
     borderStroke: SELECTION.borderColor,

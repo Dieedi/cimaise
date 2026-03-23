@@ -8,9 +8,37 @@
             "label": "Open",
             "shortcut": "ctrl+o"
         },
+        "closeApp": {
+            "label": "Close App",
+            "shortcut": "ctrl+w"
+        },
         "newFrame": {
             "label": "New Frame",
+            "shortcut": "ctrl+f"
+        },
+        "resetZoom": {
+            "label": "Reset Zoom",
+            "shortcut": ""
+        },
+        "focusAll": {
+            "label": "Focus All",
             "shortcut": "f"
+        },
+        "deleteImage": {
+            "label": "Delete Image",
+            "shortcut": "delete"
+        },
+        "deleteFrame": {
+            "label": "Delete Frame",
+            "shortcut": "delete"
+        },
+        "duplicateImage": {
+            "label": "Duplicate Image",
+            "shortcut": ""
+        },
+        "renameFrame": {
+            "label": "Rename Frame",
+            "shortcut": ""
         }
     },
     "mouse": {

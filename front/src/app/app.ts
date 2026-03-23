@@ -9,7 +9,7 @@ import { SaveService } from './services/save';
 import { OpenService } from './services/open';
 import { FrameService } from './services/frame';
 import { ContextMenuService, MenuItem } from './services/context-menu';
-import { KeyBindingService } from './services/keybinding';
+import { KeyBindingService, BindingEntry } from './services/keybinding';
 
 @Component({
   selector: 'app-root',
@@ -19,6 +19,14 @@ import { KeyBindingService } from './services/keybinding';
 export class App implements AfterViewInit{
   @ViewChild('canvasContainer') containerRef!: ElementRef<HTMLDivElement>;
   @ViewChild('contextMenuEl') contextMenuEl?: ElementRef<HTMLDivElement>;
+
+  // Keybindings panel state
+  public keybindingsPanelOpen = false;
+  public keybindingEntries: BindingEntry[] = [];
+  public capturingAction: string | null = null;
+  private capturingType: 'keyboard' | 'mouse' | null = null;
+  private captureKeyHandler: ((e: KeyboardEvent) => void) | null = null;
+  private captureMouseHandler: ((e: MouseEvent) => void) | null = null;
 
   constructor(
     private canvasService: CanvasService,
@@ -65,7 +73,29 @@ export class App implements AfterViewInit{
     // Register keyboard shortcuts via KeyBindingService
     this.keybinding.register('save', () => this.saveService.save());
     this.keybinding.register('open', () => this.openService.open());
+    this.keybinding.register('closeApp', () => window.close());
     this.keybinding.register('newFrame', () => this.frameService.createFrame());
+    this.keybinding.register('resetZoom', () => {
+      this.stage.scale({ x: 1, y: 1 });
+      this.frameService.updateTitleScales();
+    });
+    this.keybinding.register('focusAll', () => this.focusAll());
+    this.keybinding.register('deleteImage', () => {
+      const selected = [...this.selectionService.getSelected()];
+      selected.forEach(img => this.deleteImage(img));
+    });
+    this.keybinding.register('deleteFrame', () => {
+      const frame = this.frameService.getSelectedFrame();
+      if (frame) this.frameService.deleteFrame(frame);
+    });
+    this.keybinding.register('duplicateImage', () => {
+      const selected = this.selectionService.getSelected();
+      selected.forEach(img => this.duplicateImage(img));
+    });
+    this.keybinding.register('renameFrame', () => {
+      const frame = this.frameService.getSelectedFrame();
+      if (frame) this.frameService.editTitle(frame);
+    });
     this.keybinding.listen();
   }
 
@@ -214,6 +244,9 @@ export class App implements AfterViewInit{
         this.frameService.updateTitleScales();
       }},
       { type: 'action', label: 'Focus All', action: () => this.focusAll() },
+      { type: 'separator' },
+      { type: 'action', label: 'Keybindings', action: () => this.openKeybindingsPanel() },
+      { type: 'action', label: 'Close', action: () => window.close() },
     ];
   }
 
@@ -270,6 +303,77 @@ export class App implements AfterViewInit{
     this.contextMenu.close();
     if (item.action) {
       item.action();
+    }
+  }
+
+  public openKeybindingsPanel(): void {
+    this.keybindingEntries = this.keybinding.getAllBindings();
+    this.keybindingsPanelOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  public closeKeybindingsPanel(): void {
+    this.stopCapture();
+    this.keybindingsPanelOpen = false;
+    this.cdr.detectChanges();
+  }
+
+  public startCapture(entry: BindingEntry, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Clean up any previous capture
+    this.stopCapture();
+
+    this.capturingAction = entry.action;
+    this.capturingType = entry.type;
+    this.keybinding.capturing = true;
+    this.cdr.detectChanges();
+
+    if (entry.type === 'keyboard') {
+      this.captureKeyHandler = (e: KeyboardEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Ignore lone modifier keys
+        if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return;
+
+        const display = this.keybinding.updateShortcut(entry.action, e);
+        entry.display = display;
+        this.stopCapture();
+        this.cdr.detectChanges();
+      };
+      document.addEventListener('keydown', this.captureKeyHandler, true);
+    } else {
+      this.captureMouseHandler = (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const display = this.keybinding.updateMouseButton(entry.action, e);
+        entry.display = display;
+        this.stopCapture();
+        this.cdr.detectChanges();
+      };
+      // Delay to avoid capturing the click that opened capture mode
+      setTimeout(() => {
+        if (this.captureMouseHandler) {
+          document.addEventListener('mousedown', this.captureMouseHandler, true);
+        }
+      }, 100);
+    }
+  }
+
+  private stopCapture(): void {
+    this.capturingAction = null;
+    this.capturingType = null;
+    this.keybinding.capturing = false;
+
+    if (this.captureKeyHandler) {
+      document.removeEventListener('keydown', this.captureKeyHandler, true);
+      this.captureKeyHandler = null;
+    }
+    if (this.captureMouseHandler) {
+      document.removeEventListener('mousedown', this.captureMouseHandler, true);
+      this.captureMouseHandler = null;
     }
   }
 
