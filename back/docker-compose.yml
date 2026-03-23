@@ -1,0 +1,41 @@
+services:
+
+  # Base de données PostgreSQL
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: moody
+      POSTGRES_USER: moody
+      POSTGRES_PASSWORD: moody
+    ports:
+      - "5432:5432"
+    volumes:
+      # Volume nommé = les données persistent même si le container est recréé
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moody"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # API Spring Boot
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: moody
+      DB_USER: moody
+      DB_PASSWORD: moody
+      SHARED_PATH: /data/shared
+    volumes:
+      # Monte le dossier local shared/ dans le container (simule le NAS)
+      - ./shared:/data/shared
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

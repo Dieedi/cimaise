@@ -15,8 +15,9 @@ une sauvegarde locale et une API ouverte aux développeurs Python.
 
 ### Backend
 - **Spring Boot (Java)** — API REST
-- **PostgreSQL** — base de données
-- **AWS S3 ou MinIO** — stockage des images
+- **PostgreSQL** — base de données (métadonnées boards, sessions)
+- **Filesystem / partage réseau** — stockage des images (chemins référencés, pas de copie)
+- **Docker Compose** — déploiement serveur dédié
 
 ---
 
@@ -37,8 +38,9 @@ moodboard/
 - **Sélection multiple** — sélection par lasso (drag sur zone vide) et Ctrl+Click pour sélectionner/déplacer plusieurs images ensemble
 - **Frames** — zones englobantes avec titre et commentaire, permettant de regrouper visuellement des images (type Figma/Miro)
 - **Offline first** — sauvegarde locale au format `.moody` (archive ZIP propriétaire)
-- Sync avec le backend quand connexion disponible
-- **API REST** consommable par des développeurs Python (documentée via Swagger/OpenAPI)
+- **Mode connecté (LAN)** — détection automatique du serveur sur le réseau local, sync des boards partagées
+- **API REST scriptable** — consommable par des développeurs Python pour automatiser la création/modification de boards (documentée via Swagger/OpenAPI)
+- **Collaboration LAN** — système de tokens de session : avertissement si une board est déjà ouverte, choix de collaborer ou non
 - Portabilité **Windows / macOS / Linux** via Electron Builder
 
 ---
@@ -75,6 +77,10 @@ moodboard/
 | Konva.js pour le canvas | Spécialisé manipulation images, performant, bien documenté |
 | Monorepo | Permet à Claude Code de faire le lien back/front en une session |
 | Format `.moody` (ZIP) plutôt que SQLite/H2 | Un seul fichier portable, pas de BDD locale, lisible par l'API Python |
+| Chemins réseau plutôt que copie d'images | Les images vivent sur le partage réseau du studio, le serveur ne stocke que les références |
+| Docker Compose pour le backend | Déploiement simple sur un serveur dédié LAN, reproductible |
+| Tokens de session plutôt qu'authentification | Pas de comptes utilisateurs, léger, adapté au réseau interne de confiance |
+| LAN uniquement, pas de cloud | Sécurité des assets studio, pas de dépendance internet, latence minimale |
 
 ---
 
@@ -123,14 +129,27 @@ au fur et à mesure (Angular, Electron, Konva.js, Spring Boot, PostgreSQL).
 ---
 
 ## Notes pour Claude Code
+
+### Général
 - Toujours maintenir la cohérence des contrats d'API entre `back/` et `front/`
 - Les DTOs Spring Boot doivent être cohérents avec les modèles Angular
-- L'app doit fonctionner offline — le backend est optionnel pour les fonctions de base
+- L'app doit fonctionner **offline** — le backend est optionnel pour les fonctions de base (canvas, save/open local)
 - Documenter tous les endpoints REST avec Swagger (springdoc-openapi)
-- **Zoom infini** — implémenter via un système de coordonnées virtuelles (pas de limite min/max de scale). Konva supporte nativement le zoom infini via `stage.scale()`. Attention aux performances sur les très grands canvas (virtualisation des éléments hors viewport obligatoire)
+
+### Frontend (Konva / Angular / Electron)
+- **Zoom infini** — via `stage.scale()`, pas de limite min/max. Attention aux performances sur les très grands canvas (virtualisation des éléments hors viewport obligatoire)
 - **Sélection multiple** — via `Konva.Transformer` sur plusieurs nodes. Lasso = détection de collision rectangulaire sur mousedown/mousemove. Ctrl+Click = ajout/retrait du node dans la sélection courante
-- **Frames** — implémenter comme un `Konva.Group` avec un `Rect` de fond, un `Text` pour le titre, un `Text` pour le commentaire. Les images droppées à l'intérieur d'une frame doivent lui être attachées (coordonnées relatives)
-- **Fenêtre frameless** — `frame: false` dans `BrowserWindow` Electron. Implémenter une zone de drag custom (`-webkit-app-region: drag`) pour permettre le déplacement de la fenêtre
-- **Hotcorners/Hotedges** — détecter la position de la souris relative aux bords de la fenêtre via `mousemove` sur le canvas. Définir des zones de détection (ex: 10px) sur chaque bord et coin
-- **Système de raccourcis reconfigurables** — stocker la map `action → raccourci` dans un fichier `keybindings.json` local. Utiliser un service Angular centralisé (KeyBindingService) qui intercepte tous les événements clavier et dispatche les actions correspondantes. Toutes les interactions souris/clavier passent par ce service
-- **Format .moody** — lire/écrire via `jszip` (npm) côté Electron. À la sauvegarde : sérialiser le state Konva en `board.json`, copier les images embarquées, zipper le tout. À l'ouverture : dézipper en mémoire, charger `board.json`, reconstruire le canvas Konva. Les images URL sont rechargées depuis leur source distante
+- **Frames** — `Konva.Group` avec `Rect` de fond + `Text` titre (dans un overlay séparé pour le z-order). Les images droppées à l'intérieur sont attachées (coordonnées relatives)
+- **Fenêtre frameless** — `frame: false` dans `BrowserWindow` Electron. Zone de drag custom (`-webkit-app-region: drag`)
+- **Hotcorners/Hotedges** — détection position souris relative aux bords (zones de 10px)
+- **Raccourcis reconfigurables** — `keybindings.json` + `KeyBindingService` centralisé qui intercepte clavier et souris
+- **Format .moody** — lire/écrire via `jszip`. Sérialiser le state Konva en `board.json`, images embarquées dans le ZIP. À l'ouverture : dézipper en mémoire, reconstruire le canvas
+
+### Backend (Spring Boot / Docker)
+- **Docker Compose** — le backend se déploie via `docker-compose up` (Spring Boot + PostgreSQL). Un seul fichier `docker-compose.yml` à la racine de `back/`
+- **Découverte LAN** — le serveur s'annonce sur le réseau local (mDNS ou broadcast UDP). Le client Electron scanne le LAN au démarrage et propose les serveurs disponibles. Possibilité de forcer le mode local (sans serveur)
+- **Tokens de session** — pas d'authentification utilisateur. Quand un client ouvre une board, il obtient un token de session. Si un autre client ouvre la même board, le serveur avertit les deux et propose la collaboration ou le mode lecture seule
+- **Chemins réseau** — en mode connecté, les images sont référencées par leur chemin réseau (ex: `\\serveur\partage\images\photo.jpg` ou `/mnt/studio/images/photo.jpg`). Le serveur ne stocke jamais les fichiers images, seulement les métadonnées et les chemins
+- **PostgreSQL** — stocke les métadonnées des boards (titre, participants, date de modification), les sessions actives, et les chemins vers les fichiers `.moody` sur le réseau
+- **API scriptable** — endpoints REST pensés pour être consommés par des scripts Python : créer une board, ajouter des images par chemin, modifier des frames, exporter. Documenter chaque endpoint avec des exemples curl/Python
+- **Mode hybride** — le front fonctionne sans backend (save/open local en `.moody`). Le backend ajoute : partage LAN, API scriptable, historique, collaboration temps réel (évolution future)
