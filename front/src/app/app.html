@@ -1,1 +1,20 @@
 <div #canvasContainer class="canvas-container"></div>
+
+@if (contextMenu.visible) {
+  <div
+    #contextMenuEl
+    class="context-menu"
+    [style.left.px]="contextMenu.posX"
+    [style.top.px]="contextMenu.posY"
+  >
+    @for (item of contextMenu.items; track $index) {
+      @if (item.type === 'separator') {
+        <div class="context-menu-separator"></div>
+      } @else {
+        <div class="context-menu-item" (mousedown)="onMenuItemClick(item, $event)">
+          {{ item.label }}
+        </div>
+      }
+    }
+  </div>
+}

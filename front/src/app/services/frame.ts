@@ -228,6 +228,27 @@ export class FrameService {
     this.selectedFrame = null;
   }
 
+  // Delete a frame only, detaching its children
+  public deleteFrame(frame: Konva.Group): void {
+    const index = this.frames.indexOf(frame);
+    if (index === -1) return;
+
+    if (this.selectedFrame === frame) {
+      this.selectedFrame = null;
+    }
+    this.children.delete(frame.id());
+    this.frames.splice(index, 1);
+    frame.destroy();
+    this.canvasService.updateImagesBoundingBox();
+  }
+
+  // Delete a frame and all its attached images
+  public deleteFrameWithContent(frame: Konva.Group): void {
+    const frameChildren = this.children.get(frame.id()) || [];
+    frameChildren.forEach(child => child.destroy());
+    this.deleteFrame(frame);
+  }
+
   public selectFrame(group: Konva.Group): void {
     if (this.selectedFrame && this.selectedFrame !== group) {
       this.clearFrameSelection();
@@ -381,7 +402,7 @@ export class FrameService {
     }
   }
 
-  private editTitle(frame: Konva.Group): void {
+  public editTitle(frame: Konva.Group): void {
     const title = frame.findOne('.frame-title') as Konva.Text;
     if (!title) return;
 
@@ -390,16 +411,18 @@ export class FrameService {
     const stageContainer = this.stage.container();
     const stageRect = stageContainer.getBoundingClientRect();
     const scale = this.stage.scaleX();
+    // Title has inverse scale applied for zoom independence
+    const titleScale = title.scaleX();
 
     const input = document.createElement('input');
     input.type = 'text';
     input.value = title.text();
     input.style.position = 'fixed';
-    input.style.left = `${stageRect.left + titleAbsPos.x * scale + this.stage.x() % 1}px`;
-    input.style.top = `${stageRect.top + titleAbsPos.y * scale + this.stage.y() % 1}px`;
+    input.style.left = `${stageRect.left + titleAbsPos.x}px`;
+    input.style.top = `${stageRect.top + titleAbsPos.y}px`;
 
-    // Match Konva text appearance
-    const scaledFontSize = FRAME.titleFontSize * scale;
+    // Title font is at natural size (inverse-scaled on canvas)
+    const scaledFontSize = FRAME.titleFontSize * titleScale;
     input.style.fontSize = `${scaledFontSize}px`;
     input.style.fontFamily = FRAME.titleFontFamily;
     input.style.color = FRAME.titleColor;

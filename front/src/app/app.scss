@@ -1,0 +1,30 @@
+.context-menu {
+  position: fixed;
+  z-index: 2000;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 4px 0;
+  min-width: 180px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  user-select: none;
+}
+
+.context-menu-item {
+  padding: 6px 16px;
+  color: #ccc;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+
+  &:hover {
+    background: #3a3a3a;
+    color: #fff;
+  }
+}
+
+.context-menu-separator {
+  height: 1px;
+  background: #444;
+  margin: 4px 8px;
+}
