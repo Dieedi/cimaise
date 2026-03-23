@@ -1,4 +1,10 @@
 {
+    "image": {
+        "duplicateOffset": 20
+    },
+    "viewport": {
+        "focusAllPadding": 50
+    },
     "imgbb": {
         "padding": 2,
         "bgColor": "#2e2e2e"

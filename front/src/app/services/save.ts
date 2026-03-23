@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { CanvasService } from './canvas';
-import { FrameService } from './frame';
+import { FrameService, FRAME_NODE_NAME } from './frame';
 import Konva from 'konva';
 import JSZip from 'jszip';
 import appConfig from '../../../../config/app.json';
@@ -18,9 +18,7 @@ export class SaveService {
   }
 
   public async save() {
-    const images = this.canvasService.imgbb.getChildren(
-      node => node !== this.canvasService.imgbbBg && node instanceof Konva.Image
-    ) as Konva.Image[];
+    const images = this.canvasService.getImages();
 
     const zip = new JSZip();
     const imagesFolder = zip.folder('images')!;
@@ -51,7 +49,7 @@ export class SaveService {
     });
 
     const framesData = this.frameService.getFrames().map(frame => {
-      const bg = frame.findOne('.frame-bg') as Konva.Rect;
+      const bg = frame.findOne(`.${FRAME_NODE_NAME.BG}`) as Konva.Rect;
       const title = this.frameService.getTitle(frame);
       const children = this.frameService.getChildren(frame);
       return {

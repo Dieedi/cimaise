@@ -1,6 +1,7 @@
 import { Component, AfterViewInit, ElementRef, ViewChild, ChangeDetectorRef } from '@angular/core';
 import Konva from 'konva';
 import { CanvasService } from './services/canvas';
+import canvasConfig from '../../../config/canvas.json';
 import { ZoomService } from './services/zoom';
 import { PanService } from './services/pan';
 import { DropService } from './services/drop';
@@ -274,7 +275,7 @@ export class App implements AfterViewInit{
   }
 
   private duplicateImage(image: Konva.Image): void {
-    const offset = 20;
+    const offset = canvasConfig.image.duplicateOffset;
     const clone = image.clone({
       x: image.x() + offset,
       y: image.y() + offset,
@@ -396,7 +397,7 @@ export class App implements AfterViewInit{
     const contentH = maxY - minY;
     if (contentW === 0 || contentH === 0) return;
 
-    const padding = 50;
+    const padding = canvasConfig.viewport.focusAllPadding;
     const viewW = window.innerWidth - padding * 2;
     const viewH = window.innerHeight - padding * 2;
 

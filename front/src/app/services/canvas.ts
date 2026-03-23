@@ -53,6 +53,13 @@ export class CanvasService {
 
   }
 
+  /** Get all Konva.Image nodes from imgbb (excludes bg rect and frame groups) */
+  public getImages(): Konva.Image[] {
+    return this.imgbb.getChildren(
+      node => node !== this._imgbbBg && node instanceof Konva.Image
+    ) as Konva.Image[];
+  }
+
   public updateImagesBoundingBox(): void {
     const nodes = this.imgbb.getChildren(node => node !== this._imgbbBg);
     if (nodes.length === 0) {

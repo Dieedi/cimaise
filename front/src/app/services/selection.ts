@@ -93,9 +93,7 @@ export class SelectionService {
     const hasSize = boxRect.width > SELECTION.minBoxSize && boxRect.height > SELECTION.minBoxSize;
 
     if (hasSize) {
-      const images = this.canvasService.imgbb.getChildren(
-        node => node !== this.canvasService.imgbbBg && node instanceof Konva.Image
-      );
+      const images = this.canvasService.getImages();
       this.clearSelection();
       images.forEach(node => {
         const nodeRect = node.getClientRect();

@@ -40,10 +40,7 @@ export class OpenService {
   private clearCanvas(): void {
     this.selectionService.clearSelection();
     this.frameService.clearAllFrames();
-    const children = this.canvasService.imgbb.getChildren(
-      node => node !== this.canvasService.imgbbBg && node instanceof Konva.Image
-    );
-    children.forEach(node => node.destroy());
+    this.canvasService.getImages().forEach(node => node.destroy());
   }
 
   private restoreCanvas(canvas: { x: number; y: number; scale: number }): void {

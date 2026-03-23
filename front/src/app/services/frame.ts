@@ -5,6 +5,14 @@ import canvasConfig from '../../../../config/canvas.json';
 
 const FRAME = canvasConfig.frame;
 
+// Konva node name constants
+export const FRAME_NODE_NAME = {
+  BG: 'frame-bg',
+  TITLE: 'frame-title',
+  TITLES_OVERLAY: 'titles-overlay',
+} as const;
+const NODE_NAME = FRAME_NODE_NAME;
+
 type Edge = 'top' | 'bottom' | 'left' | 'right';
 type ResizeHandle = Edge | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null;
 
@@ -49,14 +57,14 @@ export class FrameService {
 
   public init(): void {
     // Overlay group on the layer for frame titles (always above images)
-    this.titlesOverlay = new Konva.Group({ name: 'titles-overlay' });
+    this.titlesOverlay = new Konva.Group({ name: NODE_NAME.TITLES_OVERLAY });
     this.canvasService.layer.add(this.titlesOverlay);
 
     // Double-click on a frame title to edit it
     this.stage.on('dblclick', (e) => {
       const target = e.target;
       // Check if clicked on a title in the overlay
-      if (target instanceof Konva.Text && target.name() === 'frame-title') {
+      if (target instanceof Konva.Text && target.name() === NODE_NAME.TITLE) {
         const frame = this.getFrameForTitle(target);
         if (frame) this.editTitle(frame);
         return;
@@ -106,7 +114,7 @@ export class FrameService {
     });
 
     const bg = new Konva.Rect({
-      name: 'frame-bg',
+      name: NODE_NAME.BG,
       width: FRAME.defaultWidth,
       height: FRAME.defaultHeight,
       fill: FRAME.bgColor,
@@ -117,7 +125,7 @@ export class FrameService {
     });
 
     const title = new Konva.Text({
-      name: 'frame-title',
+      name: NODE_NAME.TITLE,
       text: 'Frame',
       x: group.x() + FRAME.titlePadding,
       y: group.y() + FRAME.titlePadding,
@@ -196,7 +204,7 @@ export class FrameService {
     });
 
     const bg = new Konva.Rect({
-      name: 'frame-bg',
+      name: NODE_NAME.BG,
       width: data.width,
       height: data.height,
       fill: FRAME.bgColor,
@@ -207,7 +215,7 @@ export class FrameService {
     });
 
     const title = new Konva.Text({
-      name: 'frame-title',
+      name: NODE_NAME.TITLE,
       text: data.title,
       x: data.x + FRAME.titlePadding,
       y: data.y + FRAME.titlePadding,
@@ -314,7 +322,7 @@ export class FrameService {
       this.clearFrameSelection();
     }
     this.selectedFrame = group;
-    const bg = group.findOne('.frame-bg') as Konva.Rect;
+    const bg = group.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
     if (bg) {
       bg.stroke(FRAME.borderHighlightColor);
       bg.strokeWidth(2);
@@ -323,7 +331,7 @@ export class FrameService {
 
   public clearFrameSelection(): void {
     if (this.selectedFrame) {
-      const bg = this.selectedFrame.findOne('.frame-bg') as Konva.Rect;
+      const bg = this.selectedFrame.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
       if (bg) {
         bg.stroke(FRAME.borderColor);
         bg.strokeWidth(FRAME.borderWidth);
@@ -354,7 +362,7 @@ export class FrameService {
     if (!parent) return false;
     // Frame bg children or title in overlay
     if (this.frames.includes(parent as Konva.Group)) return true;
-    if (target instanceof Konva.Text && target.name() === 'frame-title') return true;
+    if (target instanceof Konva.Text && target.name() === NODE_NAME.TITLE) return true;
     return false;
   }
 
@@ -365,7 +373,7 @@ export class FrameService {
       return parent as Konva.Group;
     }
     // Check if it's a title in the overlay
-    if (target instanceof Konva.Text && target.name() === 'frame-title') {
+    if (target instanceof Konva.Text && target.name() === NODE_NAME.TITLE) {
       return this.getFrameForTitle(target);
     }
     return null;
@@ -382,7 +390,7 @@ export class FrameService {
     this.resizeStartX = worldX;
     this.resizeStartY = worldY;
 
-    const bg = result.frame.findOne('.frame-bg') as Konva.Rect;
+    const bg = result.frame.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
     this.resizeStartRect = {
       x: result.frame.x(),
       y: result.frame.y(),
@@ -400,7 +408,7 @@ export class FrameService {
 
     const dx = worldX - this.resizeStartX;
     const dy = worldY - this.resizeStartY;
-    const bg = this.resizeFrame.findOne('.frame-bg') as Konva.Rect;
+    const bg = this.resizeFrame.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
     const handle = this.resizeHandle;
 
     let newX = this.resizeStartRect.x;
@@ -453,14 +461,14 @@ export class FrameService {
     if (result) {
       container.style.cursor = CURSOR_MAP[result.handle!] || 'default';
       // Highlight hovered frame border
-      const bg = result.frame.findOne('.frame-bg') as Konva.Rect;
+      const bg = result.frame.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
       bg.stroke(FRAME.borderHighlightColor);
     } else {
       container.style.cursor = 'default';
       // Reset non-selected frame borders
       this.frames.forEach(frame => {
         if (frame !== this.selectedFrame) {
-          const bg = frame.findOne('.frame-bg') as Konva.Rect;
+          const bg = frame.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
           bg.stroke(FRAME.borderColor);
         }
       });
@@ -587,7 +595,7 @@ export class FrameService {
   // Resize frame to fit all its children images + title
   private fitFrameToChildren(frame: Konva.Group): void {
     const frameChildren = this.children.get(frame.id()) || [];
-    const bg = frame.findOne('.frame-bg') as Konva.Rect;
+    const bg = frame.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
     const title = this.titles.get(frame.id());
 
     if (frameChildren.length === 0) return;
@@ -628,7 +636,7 @@ export class FrameService {
   }
 
   private isInsideFrame(frame: Konva.Group, x: number, y: number): boolean {
-    const bg = frame.findOne('.frame-bg') as Konva.Rect;
+    const bg = frame.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
     const fx = frame.x();
     const fy = frame.y();
     return x >= fx && x <= fx + bg.width() && y >= fy && y <= fy + bg.height();
@@ -642,7 +650,7 @@ export class FrameService {
     const cornerThreshold = threshold * 3;
 
     for (const frame of this.frames) {
-      const bg = frame.findOne('.frame-bg') as Konva.Rect;
+      const bg = frame.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
       const fx = frame.x();
       const fy = frame.y();
       const fw = bg.width();
