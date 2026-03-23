@@ -31,8 +31,17 @@ ipcMain.handle('save-file', async (_event, data) => {
     }
     fs.writeFileSync(result.filePath, data);
 })
-ipcMain.handle('open-file', async (_event, data) => {
-
+ipcMain.handle('open-file', async (_event) => {
+    const result = await dialog.showOpenDialog(win, {
+        title: 'Open',
+        filters: [{ name: appConfig.save.fileTypeName, extensions: [appConfig.save.fileExtension] }],
+        properties: ['openFile'],
+    });
+    if (result.canceled || result.filePaths.length === 0) {
+        return null;
+    }
+    const data = fs.readFileSync(result.filePaths[0]);
+    return data;
 })
 app.on('window-all-closed', () => {
     app.quit();

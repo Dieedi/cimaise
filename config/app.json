@@ -9,9 +9,11 @@
         "defaultFilename": "my_board.moody",
         "fileExtension": "moody",
         "fileTypeName": "Moody Board",
-        "formatVersion": "1.0"
+        "formatVersion": "1.1"
     },
     "shortcuts": {
-        "save": "s"
+        "save": "s",
+        "open": "o",
+        "newFrame": "f"
     }
 }

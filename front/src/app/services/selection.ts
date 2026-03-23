@@ -87,7 +87,7 @@ export class SelectionService {
 
     if (hasSize) {
       const images = this.canvasService.imgbb.getChildren(
-        node => node !== this.canvasService.imgbbBg
+        node => node !== this.canvasService.imgbbBg && node instanceof Konva.Image
       );
       this.clearSelection();
       images.forEach(node => {

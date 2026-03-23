@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { CanvasService } from './canvas';
+import { FrameService } from './frame';
 import Konva from 'konva';
 import windowConfig from '../../../../config/window.json';
 
@@ -7,7 +8,10 @@ import windowConfig from '../../../../config/window.json';
   providedIn: 'root',
 })
 export class ZoomService {
-  constructor(private canvasService: CanvasService) {}
+  constructor(
+    private canvasService: CanvasService,
+    private frameService: FrameService,
+  ) {}
   private get stage(): Konva.Stage{
     return this.canvasService.stage;
   }
@@ -37,6 +41,8 @@ export class ZoomService {
         x: pointer.x - mousePointTo.x * newScale,
         y: pointer.y - mousePointTo.y * newScale,
       })
+
+      this.frameService.updateTitleScales();
     });
   }
 }

@@ -61,6 +61,22 @@ front/
 - **Module vs Standalone** — Angular 21 utilise des composants **standalone** par défaut (pas besoin de NgModules)
 - **Injection de dépendances** — Angular instancie et injecte les services automatiquement via le constructeur ou `inject()`
 
+### Services Angular dans Moody
+
+L'app est découpée en **services spécialisés**, chacun responsable d'une seule feature :
+
+| Service | Responsabilité |
+|---|---|
+| `CanvasService` | Initialise le Stage/Layer Konva, gère le groupe d'images et la bounding box |
+| `ZoomService` | Zoom molette centré sur le curseur |
+| `PanService` | Déplacement du canvas au clic molette |
+| `DropService` | Drag & drop de fichiers images depuis l'OS |
+| `SelectionService` | Sélection clic, Ctrl+clic, lasso (box select) + Transformer |
+| `SaveService` | Sauvegarde au format `.moody` (ZIP avec images embarquées) |
+| `OpenService` | Ouverture d'un fichier `.moody` (dézip, migration, reconstruction canvas) |
+
+Le composant `App` orchestre tout : il initialise les services dans `ngAfterViewInit()` et branche les événements souris/clavier.
+
 ### Lifecycle hooks
 
 Angular appelle automatiquement certaines méthodes à des moments précis de la vie d'un composant :
@@ -115,17 +131,36 @@ Point d'entrée de l'app desktop. Responsabilités :
 | `nodeIntegration: false` | Le renderer n'a pas accès aux APIs Node.js (sécurité) |
 | `contextIsolation: true` | Isole le contexte JS du renderer |
 
+### Communication Main ↔ Renderer (IPC)
+
+Les deux processus Electron ne peuvent **pas** communiquer directement. Ils passent par **IPC** (Inter-Process Communication) :
+
+1. **Main process** — enregistre un handler avec `ipcMain.handle('channel-name', callback)`
+2. **Preload script** (`preload.js`) — expose une API sécurisée au renderer via `contextBridge.exposeInMainWorld()`
+3. **Renderer** — appelle `window.electronAPI.maMethode()` qui déclenche `ipcRenderer.invoke('channel-name')`
+
+```
+Renderer  →  ipcRenderer.invoke('save-file', data)
+                    ↓
+Preload   →  contextBridge (pont sécurisé)
+                    ↓
+Main      →  ipcMain.handle('save-file', callback)  →  dialog, fs, etc.
+```
+
+Le preload est le **seul pont** entre les deux mondes. Le renderer n'a jamais accès direct à Node.js (sécurité).
+
+**Pourquoi `invoke`/`handle` ?** — Pattern requête/réponse asynchrone. `invoke` retourne une `Promise`, ce qui permet d'attendre le résultat (ex: chemin du fichier choisi par l'utilisateur dans le dialog).
+
 ### Lancement
 
 ```bash
-# Terminal 1 : Angular
-npm start
-
-# Terminal 2 : Electron (depuis front/)
-npx electron .
+# Depuis front/ — lance Angular + Electron en une commande
+npx concurrently "npm start" "npx wait-on http://localhost:4200 && npx electron ."
 ```
 
-Le `.` est obligatoire — il dit à Electron "lance l'app dans le dossier courant". Electron cherche le `package.json` et son champ `"main"` pour trouver le point d'entrée
+- `concurrently` — lance plusieurs commandes en parallèle dans le même terminal
+- `wait-on` — attend que le serveur Angular soit prêt avant de lancer Electron
+- Le `.` après `npx electron` est obligatoire — il dit à Electron "lance l'app dans le dossier courant". Electron cherche le `package.json` et son champ `"main"` pour trouver le point d'entrée
 
 ---
 
@@ -227,6 +262,74 @@ stage.on('wheel', () => {
 Accède à une propriété sans planter si la valeur est `undefined` :
 ```ts
 const files = e.dataTransfer?.files;  // undefined si dataTransfer est null/undefined
+```
+
+---
+
+## Format `.moody` — Sauvegarde et ouverture
+
+### Principe
+
+Un fichier `.moody` est une archive **ZIP renommée**. Dedans :
+
+```
+monboard.moody  (= ZIP)
+├── board.json          # état du canvas + métadonnées des images
+└── images/
+    ├── img_0.png       # images embarquées (données brutes)
+    └── img_1.jpeg
+```
+
+### Sauvegarde (SaveService)
+
+1. Parcourir tous les `Konva.Image` du canvas
+2. Pour chaque image : extraire le base64 depuis le `HTMLImageElement.src`, l'écrire dans `images/` du ZIP
+3. Construire `board.json` avec les positions, scales, rotations et les références vers les fichiers images
+4. Générer le ZIP avec `JSZip` et l'envoyer au main process via IPC pour écriture sur disque
+
+### Ouverture (OpenService)
+
+1. Le main process ouvre un dialog de sélection de fichier et retourne le buffer
+2. `JSZip.loadAsync()` dézippe en mémoire
+3. `board.json` est parsé puis passé dans `migrateBoard()` (système de migration)
+4. Le canvas existant est vidé
+5. Le stage est repositionné (x, y, scale)
+6. Chaque image est rechargée depuis le ZIP : blob → dataURL → `Image()` HTML → `Konva.Image`
+
+### Système de migration
+
+Problème : si le format de `board.json` évolue (nouveaux champs, renommages), les anciens fichiers deviennent incompatibles.
+
+Solution : un **pipeline de migrations versionnées** dans `migrations.ts` :
+
+```
+board.json v1.0  →  migration 1.0→1.1  →  migration 1.1→1.2  →  board.json v1.2 (courant)
+```
+
+Chaque migration est une fonction pure `{ from, to, migrate }` :
+- `from` — version source
+- `to` — version cible
+- `migrate(data)` — transforme le JSON et met à jour `data.version`
+
+Les migrations s'appliquent en chaîne. Un fichier v1.0 ouvert dans une app v1.5 passera par toutes les migrations intermédiaires.
+
+**Règle d'or** : on ne modifie jamais une migration existante, on en ajoute une nouvelle.
+
+### JSZip
+
+Librairie JS pour créer/lire des archives ZIP en mémoire (pas d'accès fichier nécessaire) :
+
+```ts
+// Écriture
+const zip = new JSZip();
+zip.file('board.json', jsonString);
+zip.folder('images')!.file('img_0.png', base64Data, { base64: true });
+const data = await zip.generateAsync({ type: 'uint8array' });
+
+// Lecture
+const zip = await JSZip.loadAsync(buffer);
+const content = await zip.file('board.json')!.async('string');
+const blob = await zip.file('images/img_0.png')!.async('blob');
 ```
 
 ---

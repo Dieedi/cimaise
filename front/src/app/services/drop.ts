@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { CanvasService } from './canvas';
+import { FrameService } from './frame';
 import Konva from 'konva';
 import appConfig from '../../../../config/app.json';
 const MOUSE = appConfig.mouse;
@@ -8,7 +9,10 @@ const MOUSE = appConfig.mouse;
   providedIn: 'root',
 })
 export class DropService {
-  constructor(private canvasService: CanvasService) {}
+  constructor(
+    private canvasService: CanvasService,
+    private frameService: FrameService,
+  ) {}
   private get stage(): Konva.Stage{
     return this.canvasService.stage;
   }
@@ -47,11 +51,15 @@ export class DropService {
                   kImg.stopDrag();
                 }
               })
-              kImg.on('dragmove', (e) => {
+              kImg.on('dragmove', () => {
                 this.canvasService.updateImagesBoundingBox();
+              })
+              kImg.on('dragend', () => {
+                this.frameService.updateImageAttachment(kImg);
               })
               this.canvasService.imgbb.add(kImg);
               this.canvasService.updateImagesBoundingBox();
+              this.frameService.updateImageAttachment(kImg);
             };
             img.src = reader.result as string;
           };
