@@ -37,3 +37,8 @@ springdoc:
 # Chemin vers le dossier partagé (NAS simulé)
 moody:
   shared-path: ${SHARED_PATH:/data/shared}
+  session:
+    # Seconds without heartbeat before a session is considered dead
+    timeout-seconds: ${SESSION_TIMEOUT:30}
+    # Interval in ms between dead session cleanup runs
+    cleanup-interval-ms: ${SESSION_CLEANUP_INTERVAL:60000}
