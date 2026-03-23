@@ -20,6 +20,8 @@ export class ZoomService {
   public setupZoom(): void {
     this.stage.on('wheel', (e) => {
       e.evt.preventDefault();
+      // Block zoom while editing frame title
+      if (this.frameService.isEditing) return;
       const scaleBy = windowConfig.canvas.zoomFactor;
       const currentScale = this.stage.scaleX();
       // cursor position on screen

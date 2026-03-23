@@ -28,6 +28,10 @@ export class FrameService {
   private frames: Konva.Group[] = [];
   private selectedFrame: Konva.Group | null = null;
   private children: Map<string, Konva.Node[]> = new Map();
+  private titles: Map<string, Konva.Text> = new Map();
+  private titlesOverlay!: Konva.Group;
+
+  public isEditing = false;
 
   // Resize state
   public isResizing = false;
@@ -44,14 +48,43 @@ export class FrameService {
   }
 
   public init(): void {
+    // Overlay group on the layer for frame titles (always above images)
+    this.titlesOverlay = new Konva.Group({ name: 'titles-overlay' });
+    this.canvasService.layer.add(this.titlesOverlay);
+
     // Double-click on a frame title to edit it
     this.stage.on('dblclick', (e) => {
       const target = e.target;
+      // Check if clicked on a title in the overlay
+      if (target instanceof Konva.Text && target.name() === 'frame-title') {
+        const frame = this.getFrameForTitle(target);
+        if (frame) this.editTitle(frame);
+        return;
+      }
       if (!this.isFrameNode(target)) return;
       const frame = this.getFrameFromChild(target);
       if (!frame) return;
       this.editTitle(frame);
     });
+  }
+
+  /** Find the frame associated with a title text node */
+  private getFrameForTitle(title: Konva.Text): Konva.Group | null {
+    for (const [frameId, t] of this.titles) {
+      if (t === title) {
+        return this.frames.find(f => f.id() === frameId) || null;
+      }
+    }
+    return null;
+  }
+
+  /** Sync a title position to its frame */
+  private syncTitlePosition(frame: Konva.Group): void {
+    const title = this.titles.get(frame.id());
+    if (title) {
+      title.x(frame.x() + FRAME.titlePadding);
+      title.y(frame.y() + FRAME.titlePadding);
+    }
   }
 
   public createFrame(): Konva.Group {
@@ -86,15 +119,18 @@ export class FrameService {
     const title = new Konva.Text({
       name: 'frame-title',
       text: 'Frame',
-      x: FRAME.titlePadding,
-      y: FRAME.titlePadding,
+      x: group.x() + FRAME.titlePadding,
+      y: group.y() + FRAME.titlePadding,
       fontSize: FRAME.titleFontSize,
       fontFamily: FRAME.titleFontFamily,
       fill: FRAME.titleColor,
     });
 
     group.add(bg);
-    group.add(title);
+
+    // Title lives in the overlay (above images)
+    this.titlesOverlay.add(title);
+    this.titles.set(id, title);
 
     // Track position delta to move children along with the frame
     let lastX = group.x();
@@ -116,6 +152,7 @@ export class FrameService {
         child.x(child.x() + dx);
         child.y(child.y() + dy);
       });
+      this.syncTitlePosition(group);
       this.canvasService.updateImagesBoundingBox();
     });
 
@@ -125,6 +162,10 @@ export class FrameService {
     this.frames.push(group);
     this.children.set(id, []);
     this.canvasService.updateImagesBoundingBox();
+
+    // Apply current zoom scale to title
+    const inverseScale = 1 / this.stage.scaleX();
+    title.scale({ x: inverseScale, y: inverseScale });
 
     return group;
   }
@@ -139,6 +180,12 @@ export class FrameService {
     height: number;
     children: string[];
   }): Konva.Group {
+    // Keep frameCounter above restored IDs to prevent duplicates
+    const match = data.id.match(/^frame_(\d+)$/);
+    if (match) {
+      frameCounter = Math.max(frameCounter, parseInt(match[1], 10) + 1);
+    }
+
     const group = new Konva.Group({
       id: data.id,
       x: data.x,
@@ -162,15 +209,18 @@ export class FrameService {
     const title = new Konva.Text({
       name: 'frame-title',
       text: data.title,
-      x: FRAME.titlePadding,
-      y: FRAME.titlePadding,
+      x: data.x + FRAME.titlePadding,
+      y: data.y + FRAME.titlePadding,
       fontSize: FRAME.titleFontSize,
       fontFamily: FRAME.titleFontFamily,
       fill: FRAME.titleColor,
     });
 
     group.add(bg);
-    group.add(title);
+
+    // Title lives in the overlay (above images)
+    this.titlesOverlay.add(title);
+    this.titles.set(data.id, title);
 
     let lastX = group.x();
     let lastY = group.y();
@@ -191,6 +241,7 @@ export class FrameService {
         child.x(child.x() + dx);
         child.y(child.y() + dy);
       });
+      this.syncTitlePosition(group);
       this.canvasService.updateImagesBoundingBox();
     });
 
@@ -223,8 +274,12 @@ export class FrameService {
   // Clear all frames (used by OpenService before restoring)
   public clearAllFrames(): void {
     this.frames.forEach(frame => frame.destroy());
+    for (const title of this.titles.values()) {
+      title.destroy();
+    }
     this.frames = [];
     this.children.clear();
+    this.titles.clear();
     this.selectedFrame = null;
   }
 
@@ -236,6 +291,11 @@ export class FrameService {
     if (this.selectedFrame === frame) {
       this.selectedFrame = null;
     }
+    // Remove title from overlay
+    const title = this.titles.get(frame.id());
+    if (title) title.destroy();
+    this.titles.delete(frame.id());
+
     this.children.delete(frame.id());
     this.frames.splice(index, 1);
     frame.destroy();
@@ -284,18 +344,18 @@ export class FrameService {
   public updateTitleScales(): void {
     const stageScale = this.stage.scaleX();
     const inverseScale = 1 / stageScale;
-    this.frames.forEach(frame => {
-      const title = frame.findOne('.frame-title') as Konva.Text;
-      if (title) {
-        title.scale({ x: inverseScale, y: inverseScale });
-      }
-    });
+    for (const title of this.titles.values()) {
+      title.scale({ x: inverseScale, y: inverseScale });
+    }
   }
 
   public isFrameNode(target: Konva.Node): boolean {
     const parent = target.parent;
     if (!parent) return false;
-    return this.frames.includes(parent as Konva.Group);
+    // Frame bg children or title in overlay
+    if (this.frames.includes(parent as Konva.Group)) return true;
+    if (target instanceof Konva.Text && target.name() === 'frame-title') return true;
+    return false;
   }
 
   public getFrameFromChild(target: Konva.Node): Konva.Group | null {
@@ -303,6 +363,10 @@ export class FrameService {
     if (!parent) return null;
     if (this.frames.includes(parent as Konva.Group)) {
       return parent as Konva.Group;
+    }
+    // Check if it's a title in the overlay
+    if (target instanceof Konva.Text && target.name() === 'frame-title') {
+      return this.getFrameForTitle(target);
     }
     return null;
   }
@@ -369,6 +433,7 @@ export class FrameService {
     this.resizeFrame.height(newH);
     bg.width(newW);
     bg.height(newH);
+    this.syncTitlePosition(this.resizeFrame);
     this.canvasService.updateImagesBoundingBox();
   }
 
@@ -403,16 +468,13 @@ export class FrameService {
   }
 
   public editTitle(frame: Konva.Group): void {
-    const title = frame.findOne('.frame-title') as Konva.Text;
+    const title = this.titles.get(frame.id());
     if (!title) return;
 
     // Calculate screen position of the title
     const titleAbsPos = title.getAbsolutePosition();
     const stageContainer = this.stage.container();
     const stageRect = stageContainer.getBoundingClientRect();
-    const scale = this.stage.scaleX();
-    // Title has inverse scale applied for zoom independence
-    const titleScale = title.scaleX();
 
     const input = document.createElement('input');
     input.type = 'text';
@@ -421,8 +483,8 @@ export class FrameService {
     input.style.left = `${stageRect.left + titleAbsPos.x}px`;
     input.style.top = `${stageRect.top + titleAbsPos.y}px`;
 
-    // Title font is at natural size (inverse-scaled on canvas)
-    const scaledFontSize = FRAME.titleFontSize * titleScale;
+    // Title appears at constant size on screen (inverse scale cancels zoom)
+    const scaledFontSize = FRAME.titleFontSize;
     input.style.fontSize = `${scaledFontSize}px`;
     input.style.fontFamily = FRAME.titleFontFamily;
     input.style.color = FRAME.titleColor;
@@ -435,6 +497,7 @@ export class FrameService {
 
     // Hide Konva text while editing
     title.visible(false);
+    this.isEditing = true;
 
     document.body.appendChild(input);
     input.focus();
@@ -444,6 +507,7 @@ export class FrameService {
       const newText = input.value.trim() || 'Frame';
       title.text(newText);
       title.visible(true);
+      this.isEditing = false;
       input.remove();
     };
 
@@ -452,6 +516,7 @@ export class FrameService {
         commit();
       } else if (e.key === 'Escape') {
         title.visible(true);
+        this.isEditing = false;
         input.remove();
       }
     });
@@ -496,6 +561,10 @@ export class FrameService {
     return this.children.get(frame.id()) || [];
   }
 
+  public getTitle(frame: Konva.Group): Konva.Text | null {
+    return this.titles.get(frame.id()) || null;
+  }
+
   private getFrameForImage(image: Konva.Node): Konva.Group | null {
     for (const [frameId, frameChildren] of this.children.entries()) {
       if (frameChildren.includes(image)) {
@@ -519,12 +588,12 @@ export class FrameService {
   private fitFrameToChildren(frame: Konva.Group): void {
     const frameChildren = this.children.get(frame.id()) || [];
     const bg = frame.findOne('.frame-bg') as Konva.Rect;
-    const title = frame.findOne('.frame-title') as Konva.Text;
+    const title = this.titles.get(frame.id());
 
     if (frameChildren.length === 0) return;
 
     const padding = FRAME.contentPadding;
-    const titleHeight = FRAME.titlePadding + title.height() + padding;
+    const titleHeight = FRAME.titlePadding + (title ? title.height() : FRAME.titleFontSize) + padding;
 
     // Calculate bounding box of all children (absolute coordinates)
     let minX = Infinity;
@@ -554,6 +623,7 @@ export class FrameService {
     frame.height(newH);
     bg.width(newW);
     bg.height(newH);
+    this.syncTitlePosition(frame);
     this.canvasService.updateImagesBoundingBox();
   }
 

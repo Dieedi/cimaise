@@ -52,11 +52,11 @@ export class SaveService {
 
     const framesData = this.frameService.getFrames().map(frame => {
       const bg = frame.findOne('.frame-bg') as Konva.Rect;
-      const title = frame.findOne('.frame-title') as Konva.Text;
+      const title = this.frameService.getTitle(frame);
       const children = this.frameService.getChildren(frame);
       return {
         id: frame.id(),
-        title: title.text(),
+        title: title ? title.text() : 'Frame',
         x: frame.x(),
         y: frame.y(),
         width: bg.width(),
