@@ -144,6 +144,11 @@ export class App implements AfterViewInit{
           if (this.frameService.startResize(worldX, worldY)) {
             break;
           }
+          // Only start box select on empty canvas area (not on images or frames)
+          const target = e.target;
+          if (target instanceof Konva.Image || this.frameService.isFrameNode(target)) {
+            break;
+          }
           this.selectionService.isSelecting = true;
           this.selectionService.startBoxSelect(worldX, worldY);
           break;
