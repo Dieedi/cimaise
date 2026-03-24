@@ -301,7 +301,8 @@ export class App implements AfterViewInit{
       { type: 'action', label: 'Save', action: () => this.saveService.save() },
       { type: 'action', label: 'Open', action: () => this.openService.open() },
       { type: 'separator' },
-      { type: 'action', label: 'Add Frame', action: () => this.frameService.createFrame() },
+      { type: 'action', label: 'Add Frame', action: () => this.frameService.createFrame(this.lastWorldX, this.lastWorldY) },
+      { type: 'action', label: 'Clear Canvas', color: '#f87171', action: () => this.clearCanvas() },
       { type: 'separator' },
       { type: 'action', label: 'Reset Zoom', action: () => {
         this.stage.scale({ x: 1, y: 1 });
@@ -345,6 +346,13 @@ export class App implements AfterViewInit{
       { type: 'action', label: 'Delete Frame', action: () => this.frameService.deleteFrame(frame) },
       { type: 'action', label: 'Delete Frame + Content', action: () => this.frameService.deleteFrameWithContent(frame) },
     ];
+  }
+
+  private clearCanvas(): void {
+    this.selectionService.clearSelection();
+    this.frameService.clearAllFrames();
+    this.canvasService.getImages().forEach(node => node.destroy());
+    this.canvasService.updateImagesBoundingBox();
   }
 
   private deleteImage(image: Konva.Image): void {
