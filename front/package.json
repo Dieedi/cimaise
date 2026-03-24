@@ -31,7 +31,8 @@
       }
     ],
     "win": {
-      "target": "portable"
+      "target": "portable",
+      "icon": "public/icon.png"
     }
   },
   "packageManager": "npm@10.9.2",

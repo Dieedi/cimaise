@@ -53,7 +53,7 @@
       @if (item.type === 'separator') {
         <div class="context-menu-separator"></div>
       } @else {
-        <div class="context-menu-item" (mousedown)="onMenuItemClick(item, $event)">
+        <div class="context-menu-item" (mousedown)="onMenuItemClick(item, $event)" [style.color]="item.color || ''">
           {{ item.label }}
         </div>
       }

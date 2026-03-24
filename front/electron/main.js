@@ -14,10 +14,15 @@ const appConfig = require(path.join(configPath, 'app.json'));
 const resolution = windowConfig.resolution;
 let win;
 const createWindow = () => {
+    const iconPath = isDev
+        ? path.join(__dirname, '../public/icon.png')
+        : path.join(__dirname, '../dist/front/browser/icon.png');
+
     win = new BrowserWindow({
         width: resolution.width,
         height: resolution.height,
         frame: windowConfig.frame,
+        icon: iconPath,
         webPreferences: {
             preload: path.join(__dirname, '/preload.js'),
         }

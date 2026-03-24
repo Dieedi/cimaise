@@ -5,6 +5,7 @@ export type MenuItemType = 'action' | 'separator';
 export interface MenuItem {
   type: MenuItemType;
   label?: string;
+  color?: string;
   action?: () => void;
 }
 
