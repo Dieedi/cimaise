@@ -8,6 +8,7 @@ const FRAME = canvasConfig.frame;
 // Konva node name constants
 export const FRAME_NODE_NAME = {
   BG: 'frame-bg',
+  TITLE_BAR: 'frame-titlebar',
   TITLE: 'frame-title',
   TITLES_OVERLAY: 'titles-overlay',
 } as const;
@@ -86,12 +87,12 @@ export class FrameService {
     return null;
   }
 
-  /** Sync a title position to its frame */
+  /** Sync a title position to its frame (centered vertically in title bar) */
   private syncTitlePosition(frame: Konva.Group): void {
     const title = this.titles.get(frame.id());
     if (title) {
       title.x(frame.x() + FRAME.titlePadding);
-      title.y(frame.y() + FRAME.titlePadding);
+      title.y(frame.y() + (FRAME.titleBarHeight - FRAME.titleFontSize) / 2);
     }
   }
 
@@ -125,17 +126,27 @@ export class FrameService {
       cornerRadius: FRAME.cornerRadius,
     });
 
+    const titleBar = new Konva.Rect({
+      name: NODE_NAME.TITLE_BAR,
+      width: FRAME.defaultWidth,
+      height: FRAME.titleBarHeight,
+      fill: FRAME.titleBarColor,
+      opacity: FRAME.titleBarOpacity,
+      cornerRadius: [FRAME.cornerRadius, FRAME.cornerRadius, 0, 0],
+    });
+
     const title = new Konva.Text({
       name: NODE_NAME.TITLE,
       text: 'Frame',
       x: group.x() + FRAME.titlePadding,
-      y: group.y() + FRAME.titlePadding,
+      y: group.y() + (FRAME.titleBarHeight - FRAME.titleFontSize) / 2,
       fontSize: FRAME.titleFontSize,
       fontFamily: FRAME.titleFontFamily,
       fill: FRAME.titleColor,
     });
 
     group.add(bg);
+    group.add(titleBar);
 
     // Title lives in the overlay (above images)
     this.titlesOverlay.add(title);
@@ -216,17 +227,27 @@ export class FrameService {
       cornerRadius: FRAME.cornerRadius,
     });
 
+    const titleBar = new Konva.Rect({
+      name: NODE_NAME.TITLE_BAR,
+      width: data.width,
+      height: FRAME.titleBarHeight,
+      fill: FRAME.titleBarColor,
+      opacity: FRAME.titleBarOpacity,
+      cornerRadius: [FRAME.cornerRadius, FRAME.cornerRadius, 0, 0],
+    });
+
     const title = new Konva.Text({
       name: NODE_NAME.TITLE,
       text: data.title,
       x: data.x + FRAME.titlePadding,
-      y: data.y + FRAME.titlePadding,
+      y: data.y + (FRAME.titleBarHeight - FRAME.titleFontSize) / 2,
       fontSize: FRAME.titleFontSize,
       fontFamily: FRAME.titleFontFamily,
       fill: FRAME.titleColor,
     });
 
     group.add(bg);
+    group.add(titleBar);
 
     // Title lives in the overlay (above images)
     this.titlesOverlay.add(title);
@@ -457,6 +478,8 @@ export class FrameService {
     this.resizeFrame.height(newH);
     bg.width(newW);
     bg.height(newH);
+    const titleBar = this.resizeFrame.findOne(`.${NODE_NAME.TITLE_BAR}`) as Konva.Rect;
+    if (titleBar) titleBar.width(newW);
     this.syncTitlePosition(this.resizeFrame);
     this.canvasService.updateImagesBoundingBox();
   }
@@ -612,12 +635,12 @@ export class FrameService {
   private fitFrameToChildren(frame: Konva.Group): void {
     const frameChildren = this.children.get(frame.id()) || [];
     const bg = frame.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
-    const title = this.titles.get(frame.id());
+    const titleBar = frame.findOne(`.${NODE_NAME.TITLE_BAR}`) as Konva.Rect;
 
     if (frameChildren.length === 0) return;
 
     const padding = FRAME.contentPadding;
-    const titleHeight = FRAME.titlePadding + (title ? title.height() : FRAME.titleFontSize) + padding;
+    const titleHeight = FRAME.titleBarHeight + padding;
 
     // Calculate bounding box of all children (absolute coordinates)
     let minX = Infinity;
@@ -647,6 +670,7 @@ export class FrameService {
     frame.height(newH);
     bg.width(newW);
     bg.height(newH);
+    if (titleBar) titleBar.width(newW);
     this.syncTitlePosition(frame);
     this.canvasService.updateImagesBoundingBox();
   }
