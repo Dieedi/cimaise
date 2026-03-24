@@ -40,6 +40,7 @@ public class BoardFrameService {
         frame.setY(request.y());
         frame.setWidth(request.width());
         frame.setHeight(request.height());
+        if (request.bgColor() != null) frame.setBgColor(request.bgColor());
         if (request.children() != null) frame.setChildren(request.children());
 
         return repository.save(frame);
@@ -53,6 +54,7 @@ public class BoardFrameService {
         if (request.y() != null) frame.setY(request.y());
         if (request.width() != null) frame.setWidth(request.width());
         if (request.height() != null) frame.setHeight(request.height());
+        if (request.bgColor() != null) frame.setBgColor(request.bgColor());
         if (request.children() != null) frame.setChildren(request.children());
         return repository.save(frame);
     }

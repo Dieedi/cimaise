@@ -9,5 +9,6 @@ public record CreateFrameRequest(
     double y,
     double width,
     double height,
+    String bgColor,
     List<UUID> children
 ) {}

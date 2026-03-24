@@ -43,6 +43,10 @@ public class BoardFrame {
     @Column(nullable = false)
     private double height;
 
+    /** Background color (hex, e.g. "#2a2a2a") */
+    @Column(nullable = false)
+    private String bgColor = "#2a2a2a";
+
     /** IDs of images attached to this frame */
     @ElementCollection
     @CollectionTable(name = "board_frame_children", joinColumns = @JoinColumn(name = "frame_id"))
@@ -71,6 +75,9 @@ public class BoardFrame {
 
     public double getHeight() { return height; }
     public void setHeight(double height) { this.height = height; }
+
+    public String getBgColor() { return bgColor; }
+    public void setBgColor(String bgColor) { this.bgColor = bgColor; }
 
     public List<UUID> getChildren() { return children; }
     public void setChildren(List<UUID> children) { this.children = children; }

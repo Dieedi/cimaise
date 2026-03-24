@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { CanvasService } from './canvas';
 import { FrameService, FRAME_NODE_NAME } from './frame';
-import { ApiService } from './api';
 import Konva from 'konva';
 import JSZip from 'jszip';
 import appConfig from '../../../../config/app.json';
@@ -10,9 +9,6 @@ import appConfig from '../../../../config/app.json';
   providedIn: 'root',
 })
 export class SaveService {
-  /** Backend board ID — null until the board has been registered on the server */
-  private currentBoardId: string | null = null;
-
   /** Current file path — null until first save or open */
   private currentFilePath: string | null = null;
 
@@ -27,20 +23,9 @@ export class SaveService {
   constructor(
     private canvasService: CanvasService,
     private frameService: FrameService,
-    private apiService: ApiService,
   ) {}
   private get stage(): Konva.Stage{
     return this.canvasService.stage;
-  }
-
-  /** Set the backend board ID (e.g. when opening a board that was already registered) */
-  public setBoardId(id: string | null): void {
-    this.currentBoardId = id;
-  }
-
-  /** Get the current backend board ID */
-  public getBoardId(): string | null {
-    return this.currentBoardId;
   }
 
   /** Set the current file path (called by OpenService after opening a file) */
@@ -57,21 +42,17 @@ export class SaveService {
   public async save() {
     const zipData = await this.generateZip();
 
-    let filePath: string | null;
-
     if (this.currentFilePath) {
       // Silent save to the known path (no dialog)
       await window.electronAPI.saveFileTo(this.currentFilePath, zipData);
-      filePath = this.currentFilePath;
     } else {
       // First save — show the dialog
-      filePath = await window.electronAPI.saveFile(zipData);
+      const filePath = await window.electronAPI.saveFile(zipData);
       if (!filePath) return; // User cancelled
       this.currentFilePath = filePath;
     }
 
     this.dirty = false;
-    await this.syncToBackend(filePath);
   }
 
   /** Save As: always show the dialog, even if a path is already known */
@@ -83,7 +64,6 @@ export class SaveService {
 
     this.currentFilePath = filePath;
     this.dirty = false;
-    await this.syncToBackend(filePath);
   }
 
   /** Generate the .moody ZIP archive from the current canvas state */
@@ -146,34 +126,5 @@ export class SaveService {
 
     zip.file('board.json', JSON.stringify(boardData, null, 2));
     return zip.generateAsync({ type: 'uint8array' });
-  }
-
-  /**
-   * Register or update the board on the backend after a local save.
-   * Extracts the board title from the filename (e.g. "my-board.moody" → "my-board").
-   */
-  private async syncToBackend(filePath: string): Promise<void> {
-    if (!this.apiService.connected) return;
-
-    const title = this.extractTitle(filePath);
-
-    try {
-      if (this.currentBoardId) {
-        // Board already registered — update its metadata
-        await this.apiService.updateBoard(this.currentBoardId, { title, filePath });
-      } else {
-        // First save while connected — create the board on the server
-        const board = await this.apiService.createBoard(title, filePath);
-        this.currentBoardId = board.id;
-      }
-    } catch (err) {
-      console.warn('Failed to sync board to backend:', err);
-    }
-  }
-
-  /** Extract a human-readable title from a file path */
-  private extractTitle(filePath: string): string {
-    const filename = filePath.replace(/\\/g, '/').split('/').pop() || 'Untitled';
-    return filename.replace(/\.moody$/i, '');
   }
 }

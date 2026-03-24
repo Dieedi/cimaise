@@ -321,7 +321,7 @@ export class App implements AfterViewInit{
       { type: 'action', label: 'Keybindings', action: () => this.openKeybindingsPanel() },
       { type: 'separator' },
       this.apiService.connected
-        ? { type: 'action', label: '● Server Connected', color: '#4ade80', action: () => this.apiService.disconnect().then(() => this.cdr.detectChanges()) }
+        ? { type: 'action', label: '● Server Connected', color: '#4ade80', action: () => { this.apiService.disconnect(); this.cdr.detectChanges(); } }
         : { type: 'action', label: '○ Offline mode', action: () => this.apiService.tryConnect().then(() => this.cdr.detectChanges()) },
       { type: 'separator' },
       { type: 'action', label: 'Close', action: () => window.close() },

@@ -3,14 +3,18 @@ package com.moody.board;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * REST controller for board CRUD operations.
+ * REST controller for board CRUD operations + export.
  *
  * Annotations:
  * - @RestController = @Controller + @ResponseBody
@@ -30,9 +34,11 @@ import java.util.UUID;
 public class BoardController {
 
     private final BoardService service;
+    private final ExportService exportService;
 
-    public BoardController(BoardService service) {
+    public BoardController(BoardService service, ExportService exportService) {
         this.service = service;
+        this.exportService = exportService;
     }
 
     @GetMapping
@@ -67,5 +73,19 @@ public class BoardController {
     @Operation(summary = "Delete a board")
     public void delete(@PathVariable UUID id) {
         service.delete(id);
+    }
+
+    @GetMapping("/{id}/export")
+    @Operation(summary = "Export a board as a .moody file (ZIP archive)")
+    public ResponseEntity<byte[]> export(@PathVariable UUID id) throws IOException {
+        Board board = service.findById(id);
+        byte[] zipData = exportService.export(id);
+
+        String filename = board.getTitle().replaceAll("[^a-zA-Z0-9_\\-]", "_") + ".moody";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(zipData);
     }
 }

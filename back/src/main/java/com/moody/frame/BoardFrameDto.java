@@ -11,6 +11,7 @@ public record BoardFrameDto(
     double y,
     double width,
     double height,
+    String bgColor,
     List<UUID> children
 ) {
     public static BoardFrameDto from(BoardFrame frame) {
@@ -22,6 +23,7 @@ public record BoardFrameDto(
             frame.getY(),
             frame.getWidth(),
             frame.getHeight(),
+            frame.getBgColor(),
             frame.getChildren()
         );
     }
