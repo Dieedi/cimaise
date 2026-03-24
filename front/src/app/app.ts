@@ -37,6 +37,10 @@ export class App implements AfterViewInit{
     isDragging: boolean;
   } | null = null;
 
+  // Last known cursor position in world coordinates
+  private lastWorldX = 0;
+  private lastWorldY = 0;
+
   constructor(
     private canvasService: CanvasService,
     private zoomService: ZoomService,
@@ -90,7 +94,7 @@ export class App implements AfterViewInit{
     this.keybinding.register('save', () => this.saveService.save());
     this.keybinding.register('open', () => this.openService.open());
     this.keybinding.register('closeApp', () => window.close());
-    this.keybinding.register('newFrame', () => this.frameService.createFrame());
+    this.keybinding.register('newFrame', () => this.frameService.createFrame(this.lastWorldX, this.lastWorldY));
     this.keybinding.register('resetZoom', () => {
       this.stage.scale({ x: 1, y: 1 });
       this.frameService.updateTitleScales();
@@ -226,6 +230,8 @@ export class App implements AfterViewInit{
       const scale = this.stage.scaleX();
       const worldX = (e.evt.pageX - stagePos.x) / scale;
       const worldY = (e.evt.pageY - stagePos.y) / scale;
+      this.lastWorldX = worldX;
+      this.lastWorldY = worldY;
 
       if (this.frameService.isResizing) {
         this.frameService.updateResize(worldX, worldY);

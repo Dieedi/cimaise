@@ -95,19 +95,20 @@ export class FrameService {
     }
   }
 
-  public createFrame(): Konva.Group {
+  public createFrame(worldX?: number, worldY?: number): Konva.Group {
     const stagePos = this.stage.position();
     const scale = this.stage.scaleX();
 
-    const centerX = (window.innerWidth / 2 - stagePos.x) / scale;
-    const centerY = (window.innerHeight / 2 - stagePos.y) / scale;
+    // Use cursor position if provided, otherwise center of viewport
+    const cx = worldX ?? (window.innerWidth / 2 - stagePos.x) / scale;
+    const cy = worldY ?? (window.innerHeight / 2 - stagePos.y) / scale;
 
     const id = `frame_${frameCounter++}`;
 
     const group = new Konva.Group({
       id,
-      x: centerX - FRAME.defaultWidth / 2,
-      y: centerY - FRAME.defaultHeight / 2,
+      x: cx - FRAME.defaultWidth / 2,
+      y: cy - FRAME.defaultHeight / 2,
       width: FRAME.defaultWidth,
       height: FRAME.defaultHeight,
       draggable: true,
