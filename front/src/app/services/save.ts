@@ -13,6 +13,17 @@ export class SaveService {
   /** Backend board ID — null until the board has been registered on the server */
   private currentBoardId: string | null = null;
 
+  /** Current file path — null until first save or open */
+  private currentFilePath: string | null = null;
+
+  /** True when the canvas has unsaved changes */
+  private _dirty: boolean = false;
+  public get dirty(): boolean { return this._dirty; }
+  public set dirty(value: boolean) {
+    this._dirty = value;
+    document.title = value ? '● Moody' : 'Moody';
+  }
+
   constructor(
     private canvasService: CanvasService,
     private frameService: FrameService,
@@ -32,7 +43,51 @@ export class SaveService {
     return this.currentBoardId;
   }
 
+  /** Set the current file path (called by OpenService after opening a file) */
+  public setFilePath(path: string | null): void {
+    this.currentFilePath = path;
+  }
+
+  /** Get the current file path */
+  public getFilePath(): string | null {
+    return this.currentFilePath;
+  }
+
+  /** Save: write silently to current path, or show dialog if no path yet */
   public async save() {
+    const zipData = await this.generateZip();
+
+    let filePath: string | null;
+
+    if (this.currentFilePath) {
+      // Silent save to the known path (no dialog)
+      await window.electronAPI.saveFileTo(this.currentFilePath, zipData);
+      filePath = this.currentFilePath;
+    } else {
+      // First save — show the dialog
+      filePath = await window.electronAPI.saveFile(zipData);
+      if (!filePath) return; // User cancelled
+      this.currentFilePath = filePath;
+    }
+
+    this.dirty = false;
+    await this.syncToBackend(filePath);
+  }
+
+  /** Save As: always show the dialog, even if a path is already known */
+  public async saveAs() {
+    const zipData = await this.generateZip();
+
+    const filePath = await window.electronAPI.saveFile(zipData);
+    if (!filePath) return; // User cancelled
+
+    this.currentFilePath = filePath;
+    this.dirty = false;
+    await this.syncToBackend(filePath);
+  }
+
+  /** Generate the .moody ZIP archive from the current canvas state */
+  private async generateZip(): Promise<Uint8Array> {
     const images = this.canvasService.getImages();
 
     const zip = new JSZip();
@@ -42,7 +97,6 @@ export class SaveService {
       const id = node.id() || `img_${i}`;
       node.id(id);
 
-      // Extract image data from the Konva node and embed it in the ZIP
       const htmlImg = node.image() as HTMLImageElement;
       const dataUrl = htmlImg.src;
       const base64 = dataUrl.split(',')[1];
@@ -91,14 +145,7 @@ export class SaveService {
     };
 
     zip.file('board.json', JSON.stringify(boardData, null, 2));
-    const zipData = await zip.generateAsync({ type: 'uint8array' });
-
-    // Save locally and get the file path back from Electron
-    const filePath = await window.electronAPI.saveFile(zipData);
-    if (!filePath) return; // User cancelled the dialog
-
-    // Sync with backend if connected
-    await this.syncToBackend(filePath);
+    return zip.generateAsync({ type: 'uint8array' });
   }
 
   /**

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CanvasService } from './canvas';
 import { FrameService } from './frame';
+import { SaveService } from './save';
 import { KeyBindingService } from './keybinding';
 import Konva from 'konva';
 
@@ -11,6 +12,7 @@ export class DropService {
   constructor(
     private canvasService: CanvasService,
     private frameService: FrameService,
+    private saveService: SaveService,
     private keybinding: KeyBindingService,
   ) {}
   private get stage(): Konva.Stage{
@@ -60,6 +62,7 @@ export class DropService {
               this.canvasService.imgbb.add(kImg);
               this.canvasService.updateImagesBoundingBox();
               this.frameService.updateImageAttachment(kImg);
+              this.saveService.dirty = true;
             };
             img.src = reader.result as string;
           };

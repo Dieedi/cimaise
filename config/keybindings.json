@@ -4,6 +4,10 @@
             "label": "Save",
             "shortcut": "ctrl+s"
         },
+        "saveAs": {
+            "label": "Save As",
+            "shortcut": "ctrl+shift+s"
+        },
         "open": {
             "label": "Open",
             "shortcut": "ctrl+o"

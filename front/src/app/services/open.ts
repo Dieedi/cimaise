@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { CanvasService } from './canvas';
 import { SelectionService } from './selection';
 import { FrameService } from './frame';
+import { SaveService } from './save';
 import { KeyBindingService } from './keybinding';
 import Konva from 'konva';
 import JSZip from 'jszip';
@@ -15,12 +16,18 @@ export class OpenService {
     private canvasService: CanvasService,
     private selectionService: SelectionService,
     private frameService: FrameService,
+    private saveService: SaveService,
     private keybinding: KeyBindingService,
   ) {}
 
   public async open(): Promise<void> {
-    const data = await window.electronAPI.openFile();
-    if (!data) return;
+    const result = await window.electronAPI.openFile();
+    if (!result) return;
+
+    const [data, filePath] = result;
+
+    // Remember the file path so Ctrl+S saves to the same location
+    this.saveService.setFilePath(filePath);
 
     const zip = await JSZip.loadAsync(data);
     const boardFile = zip.file('board.json');
@@ -35,6 +42,9 @@ export class OpenService {
     this.restoreCanvas(boardData.canvas);
     await this.restoreImages(zip, boardData.images);
     this.restoreFrames(boardData.frames || []);
+
+    // Board just opened — no unsaved changes yet
+    this.saveService.dirty = false;
   }
 
   private clearCanvas(): void {

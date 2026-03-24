@@ -78,6 +78,7 @@ export class App implements AfterViewInit{
     this.zoomService.setupZoom();
     this.panService.setupPan();
     this.dropService.setupDragAndDrop();
+    this.setupDirtyTracking();
     this.setupContextMenu();
 
     // Close context menu on any click outside it
@@ -92,8 +93,9 @@ export class App implements AfterViewInit{
 
     // Register keyboard shortcuts via KeyBindingService
     this.keybinding.register('save', () => this.saveService.save());
-    this.keybinding.register('open', () => this.openService.open());
-    this.keybinding.register('closeApp', () => window.close());
+    this.keybinding.register('saveAs', () => this.saveService.saveAs());
+    this.keybinding.register('open', () => this.confirmIfDirty(() => this.openService.open()));
+    this.keybinding.register('closeApp', () => this.confirmIfDirty(() => window.close()));
     this.keybinding.register('newFrame', () => this.frameService.createFrame(this.lastWorldX, this.lastWorldY));
     this.keybinding.register('resetZoom', () => {
       this.stage.scale({ x: 1, y: 1 });
@@ -304,7 +306,8 @@ export class App implements AfterViewInit{
   private buildCanvasMenu(): MenuItem[] {
     return [
       { type: 'action', label: 'Save', action: () => this.saveService.save() },
-      { type: 'action', label: 'Open', action: () => this.openService.open() },
+      { type: 'action', label: 'Save As', action: () => this.saveService.saveAs() },
+      { type: 'action', label: 'Open', action: () => this.confirmIfDirty(() => this.openService.open()) },
       { type: 'separator' },
       { type: 'action', label: 'Add Frame', action: () => this.frameService.createFrame(this.lastWorldX, this.lastWorldY) },
       { type: 'action', label: 'Clear Canvas', color: '#f87171', action: () => this.clearCanvas() },
@@ -477,6 +480,32 @@ export class App implements AfterViewInit{
     if (this.captureMouseHandler) {
       document.removeEventListener('mousedown', this.captureMouseHandler, true);
       this.captureMouseHandler = null;
+    }
+  }
+
+  /**
+   * Mark the board as dirty whenever the canvas content changes.
+   * Listens to dragend (image/frame moved) and node add/remove on the layer.
+   */
+  private setupDirtyTracking(): void {
+    const markDirty = () => { this.saveService.dirty = true; };
+
+    // Image or frame dragged
+    this.canvasService.layer.on('dragend', markDirty);
+
+    // Watch for nodes added/removed (drop, delete, frame create, etc.)
+    const observer = new MutationObserver(markDirty);
+    observer.observe(this.stage.container(), { childList: true, subtree: true });
+  }
+
+  /** Run an action only if there are no unsaved changes, or user confirms */
+  private confirmIfDirty(action: () => void): void {
+    if (!this.saveService.dirty) {
+      action();
+      return;
+    }
+    if (confirm('You have unsaved changes. Continue without saving?')) {
+      action();
     }
   }
 

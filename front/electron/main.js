@@ -42,6 +42,9 @@ ipcMain.on('move-window', (_event, deltaX, deltaY) => {
     win.setPosition(x + deltaX, y + deltaY);
 });
 
+ipcMain.handle('save-file-to', async (_event, filePath, data) => {
+    fs.writeFileSync(filePath, data);
+})
 ipcMain.handle('save-file', async (_event, data) => {
     const result = await dialog.showSaveDialog(win, {
         title: 'save',
@@ -63,8 +66,11 @@ ipcMain.handle('open-file', async (_event) => {
     if (result.canceled || result.filePaths.length === 0) {
         return null;
     }
-    const data = fs.readFileSync(result.filePaths[0]);
-    return data;
+    const filePath = result.filePaths[0];
+    const buffer = fs.readFileSync(filePath);
+    // Convert Buffer to Uint8Array so it serializes cleanly through IPC
+    const data = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+    return [data, filePath];
 })
 app.on('window-all-closed', () => {
     app.quit();
