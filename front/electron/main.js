@@ -49,9 +49,10 @@ ipcMain.handle('save-file', async (_event, data) => {
         filters: [{ name: appConfig.save.fileTypeName, extensions: [appConfig.save.fileExtension] }],
     });
     if (result.canceled === true) {
-        return;
+        return null;
     }
     fs.writeFileSync(result.filePath, data);
+    return result.filePath;
 })
 ipcMain.handle('open-file', async (_event) => {
     const result = await dialog.showOpenDialog(win, {
