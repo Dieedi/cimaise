@@ -24,10 +24,27 @@ export class SelectionService {
   private startY!: number;
 
   /** Get currently selected images */
-  public getSelected(): Konva.Image[] {
+  public getSelectedImages(): Konva.Image[] {
     return this.selectedNodes.filter(
       (n): n is Konva.Image => n instanceof Konva.Image
     );
+  }
+
+  /** Get currently selected frames */
+  public getSelectedFrames(): Konva.Group[] {
+    return this.selectedNodes.filter(
+      (n): n is Konva.Group => n instanceof Konva.Group
+    );
+  }
+
+  /** Get all selected nodes (images + frames) */
+  public getSelected(): Konva.Node[] {
+    return [...this.selectedNodes];
+  }
+
+  /** Check if a node is selected */
+  public isSelected(node: Konva.Node): boolean {
+    return this.selectedNodes.includes(node);
   }
 
   init(): void {
@@ -88,19 +105,30 @@ export class SelectionService {
     this.boxSelectRect.height(currentPosY - this.startY);
   }
 
-  public endBoxSelect(): boolean {
+  public endBoxSelect(frames: Konva.Group[] = []): boolean {
     const boxRect = this.boxSelectRect.getClientRect();
     const hasSize = boxRect.width > SELECTION.minBoxSize && boxRect.height > SELECTION.minBoxSize;
 
     if (hasSize) {
       const images = this.canvasService.getImages();
       this.clearSelection();
+
+      // Select images that intersect the box
       images.forEach(node => {
         const nodeRect = node.getClientRect();
         if (this.haveIntersection(nodeRect, boxRect)) {
           this.selectedNodes.push(node);
         }
       });
+
+      // Select frames that intersect the box
+      frames.forEach(frame => {
+        const frameRect = frame.getClientRect();
+        if (this.haveIntersection(frameRect, boxRect)) {
+          this.selectedNodes.push(frame);
+        }
+      });
+
       this.transformer.setNodes(this.selectedNodes);
     }
 

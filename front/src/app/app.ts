@@ -97,20 +97,26 @@ export class App implements AfterViewInit{
     });
     this.keybinding.register('focusAll', () => this.focusAll());
     this.keybinding.register('deleteImage', () => {
-      const selected = [...this.selectionService.getSelected()];
-      selected.forEach(img => this.deleteImage(img));
+      const images = [...this.selectionService.getSelectedImages()];
+      const frames = [...this.selectionService.getSelectedFrames()];
+      this.selectionService.clearSelection();
+      images.forEach(img => this.deleteImage(img));
+      frames.forEach(frame => this.frameService.deleteFrame(frame));
     });
     this.keybinding.register('deleteFrame', () => {
-      const frame = this.frameService.getSelectedFrame();
-      if (frame) this.frameService.deleteFrame(frame);
+      const frames = this.selectionService.getSelectedFrames();
+      if (frames.length > 0) {
+        this.selectionService.clearSelection();
+        frames.forEach(frame => this.frameService.deleteFrame(frame));
+      }
     });
     this.keybinding.register('duplicateImage', () => {
-      const selected = this.selectionService.getSelected();
+      const selected = this.selectionService.getSelectedImages();
       selected.forEach(img => this.duplicateImage(img));
     });
     this.keybinding.register('renameFrame', () => {
-      const frame = this.frameService.getSelectedFrame();
-      if (frame) this.frameService.editTitle(frame);
+      const frames = this.selectionService.getSelectedFrames();
+      if (frames.length === 1) this.frameService.editTitle(frames[0]);
     });
     this.keybinding.listen();
   }
@@ -160,26 +166,27 @@ export class App implements AfterViewInit{
             break;
           }
           this.selectionService.isSelecting = false;
-          const hasBoxSelected = this.selectionService.endBoxSelect();
+          const hasBoxSelected = this.selectionService.endBoxSelect(this.frameService.getFrames());
           if (!hasBoxSelected) {
             // click select on mouseup to allow box select draw on mousedown
             const target = e.target;
             if (target instanceof Konva.Image) {
-              this.frameService.clearFrameSelection();
               if (e.evt.ctrlKey) {
                 this.selectionService.toggleSelect(target);
               } else {
                 this.selectionService.select(target);
               }
             } else if (this.frameService.isFrameNode(target)) {
-              this.selectionService.clearSelection();
               const frame = this.frameService.getFrameFromChild(target);
               if (frame) {
-                this.frameService.selectFrame(frame);
+                if (e.evt.ctrlKey) {
+                  this.selectionService.toggleSelect(frame);
+                } else {
+                  this.selectionService.select(frame);
+                }
               }
             } else {
               this.selectionService.clearSelection();
-              this.frameService.clearFrameSelection();
             }
           }
           break;
