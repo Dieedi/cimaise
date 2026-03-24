@@ -30,6 +30,13 @@ export class App implements AfterViewInit{
   private captureKeyHandler: ((e: KeyboardEvent) => void) | null = null;
   private captureMouseHandler: ((e: MouseEvent) => void) | null = null;
 
+  // Window drag state (right-click drag to move frameless window)
+  private windowDragState: {
+    startX: number; startY: number;
+    lastX: number; lastY: number;
+    isDragging: boolean;
+  } | null = null;
+
   constructor(
     private canvasService: CanvasService,
     private zoomService: ZoomService,
@@ -134,6 +141,13 @@ export class App implements AfterViewInit{
           this.panService.isPanning = true;
           break;
         case this.keybinding.getMouseButton('menuOpen'):
+          this.windowDragState = {
+            startX: e.evt.screenX,
+            startY: e.evt.screenY,
+            lastX: e.evt.screenX,
+            lastY: e.evt.screenY,
+            isDragging: false,
+          };
           break;
       }
     })
@@ -173,11 +187,34 @@ export class App implements AfterViewInit{
           this.panService.isPanning = false;
           break;
         case this.keybinding.getMouseButton('menuOpen'):
+          // Delay reset so contextmenu event can still check isDragging
+          setTimeout(() => this.windowDragState = null, 0);
           break;
       }
     })
 
     this.stage.on('mousemove', (e) => {
+      // Window drag with right-click
+      if (this.windowDragState) {
+        const dx = e.evt.screenX - this.windowDragState.lastX;
+        const dy = e.evt.screenY - this.windowDragState.lastY;
+        const totalDx = e.evt.screenX - this.windowDragState.startX;
+        const totalDy = e.evt.screenY - this.windowDragState.startY;
+
+        if (!this.windowDragState.isDragging) {
+          if (Math.abs(totalDx) > 5 || Math.abs(totalDy) > 5) {
+            this.windowDragState.isDragging = true;
+          } else {
+            return;
+          }
+        }
+
+        this.windowDragState.lastX = e.evt.screenX;
+        this.windowDragState.lastY = e.evt.screenY;
+        window.electronAPI.moveWindow(dx, dy);
+        return;
+      }
+
       const stagePos = this.stage.position();
       const scale = this.stage.scaleX();
       const worldX = (e.evt.pageX - stagePos.x) / scale;
@@ -202,6 +239,11 @@ export class App implements AfterViewInit{
 
     container.addEventListener('contextmenu', (e) => {
       e.preventDefault();
+
+      // Skip context menu if window was dragged
+      if (this.windowDragState?.isDragging) {
+        return;
+      }
 
       // Find which Konva node is under the cursor
       const pos = this.stage.getPointerPosition();

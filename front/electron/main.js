@@ -37,6 +37,11 @@ const createWindow = () => {
 
 app.whenReady().then(createWindow)
 
+ipcMain.on('move-window', (_event, deltaX, deltaY) => {
+    const [x, y] = win.getPosition();
+    win.setPosition(x + deltaX, y + deltaY);
+});
+
 ipcMain.handle('save-file', async (_event, data) => {
     const result = await dialog.showSaveDialog(win, {
         title: 'save',
