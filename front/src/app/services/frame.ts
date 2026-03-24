@@ -187,6 +187,7 @@ export class FrameService {
     width: number;
     height: number;
     children: string[];
+    bgColor?: string;
   }): Konva.Group {
     // Keep frameCounter above restored IDs to prevent duplicates
     const match = data.id.match(/^frame_(\d+)$/);
@@ -207,7 +208,7 @@ export class FrameService {
       name: NODE_NAME.BG,
       width: data.width,
       height: data.height,
-      fill: FRAME.bgColor,
+      fill: data.bgColor || FRAME.bgColor,
       opacity: FRAME.bgOpacity,
       stroke: FRAME.borderColor,
       strokeWidth: FRAME.borderWidth,
@@ -346,6 +347,20 @@ export class FrameService {
 
   public getFrames(): Konva.Group[] {
     return this.frames;
+  }
+
+  /** Change the background color of a frame */
+  public setColor(frame: Konva.Group, color: string): void {
+    const bg = frame.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
+    if (bg) {
+      bg.fill(color);
+    }
+  }
+
+  /** Get the current background color of a frame */
+  public getColor(frame: Konva.Group): string {
+    const bg = frame.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
+    return bg ? (bg.fill() as string) : FRAME.bgColor;
   }
 
   // Keep title visually the same size regardless of zoom level

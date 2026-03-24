@@ -23,6 +23,20 @@ const migrations: Migration[] = [
       return data;
     },
   },
+  {
+    from: '1.1',
+    to: '1.2',
+    migrate: (data) => {
+      // Add bgColor to frames
+      if (data.frames) {
+        data.frames.forEach((frame: any) => {
+          if (!frame.bgColor) frame.bgColor = '#2a2a2a';
+        });
+      }
+      data.version = '1.2';
+      return data;
+    },
+  },
 ];
 
 // Applies all necessary migrations to bring boardData

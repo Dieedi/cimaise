@@ -59,6 +59,7 @@ export class SaveService {
         y: frame.y(),
         width: bg.width(),
         height: bg.height(),
+        bgColor: bg.fill(),
         children: children.map(c => c.id()),
       };
     });

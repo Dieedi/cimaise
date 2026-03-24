@@ -314,8 +314,20 @@ export class App implements AfterViewInit{
   }
 
   private buildFrameMenu(frame: Konva.Group): MenuItem[] {
+    const currentColor = this.frameService.getColor(frame);
+    const swatches = canvasConfig.frame.colorPresets.map(preset => ({
+      color: preset.color,
+      active: preset.color === currentColor,
+    }));
+
     return [
       { type: 'action', label: 'Rename', action: () => this.frameService.editTitle(frame) },
+      { type: 'separator' },
+      {
+        type: 'color-picker',
+        swatches,
+        onPick: (color: string) => this.frameService.setColor(frame, color),
+      },
       { type: 'separator' },
       { type: 'action', label: 'Delete Frame', action: () => this.frameService.deleteFrame(frame) },
       { type: 'action', label: 'Delete Frame + Content', action: () => this.frameService.deleteFrameWithContent(frame) },
@@ -359,6 +371,15 @@ export class App implements AfterViewInit{
     this.contextMenu.close();
     if (item.action) {
       item.action();
+    }
+  }
+
+  public onSwatchClick(item: MenuItem, color: string, event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.contextMenu.close();
+    if (item.onPick) {
+      item.onPick(color);
     }
   }
 

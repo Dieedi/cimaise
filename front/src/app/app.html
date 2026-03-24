@@ -52,6 +52,17 @@
     @for (item of contextMenu.items; track $index) {
       @if (item.type === 'separator') {
         <div class="context-menu-separator"></div>
+      } @else if (item.type === 'color-picker') {
+        <div class="context-menu-colors">
+          @for (swatch of item.swatches; track swatch.color) {
+            <div
+              class="color-swatch"
+              [class.active]="swatch.active"
+              [style.background]="swatch.color"
+              (mousedown)="onSwatchClick(item, swatch.color, $event)"
+            ></div>
+          }
+        </div>
       } @else {
         <div class="context-menu-item" (mousedown)="onMenuItemClick(item, $event)" [style.color]="item.color || ''">
           {{ item.label }}

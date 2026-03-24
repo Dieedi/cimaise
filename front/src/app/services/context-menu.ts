@@ -1,12 +1,19 @@
 import { Injectable } from '@angular/core';
 
-export type MenuItemType = 'action' | 'separator';
+export type MenuItemType = 'action' | 'separator' | 'color-picker';
+
+export interface ColorSwatch {
+  color: string;
+  active?: boolean;
+}
 
 export interface MenuItem {
   type: MenuItemType;
   label?: string;
   color?: string;
   action?: () => void;
+  swatches?: ColorSwatch[];
+  onPick?: (color: string) => void;
 }
 
 export type ContextType = 'canvas' | 'image' | 'frame';
