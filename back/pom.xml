@@ -12,11 +12,11 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.moody</groupId>
-    <artifactId>moody-server</artifactId>
+    <groupId>com.cimaise</groupId>
+    <artifactId>cimaise-server</artifactId>
     <version>0.1.0</version>
-    <name>Moody Server</name>
-    <description>LAN server for Moody moodboard app</description>
+    <name>Cimaise Server</name>
+    <description>LAN server for Cimaise moodboard app</description>
 
     <properties>
         <java.version>21</java.version>

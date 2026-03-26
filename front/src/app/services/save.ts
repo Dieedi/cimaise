@@ -17,7 +17,7 @@ export class SaveService {
   public get dirty(): boolean { return this._dirty; }
   public set dirty(value: boolean) {
     this._dirty = value;
-    document.title = value ? '● Moody' : 'Moody';
+    document.title = value ? '● Cimaise' : 'Cimaise';
   }
 
   constructor(

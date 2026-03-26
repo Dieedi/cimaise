@@ -37,7 +37,7 @@ moodboard/
 - Manipulation d'images sur canvas (zoom infini, pan, drag & drop)
 - **Sélection multiple** — sélection par lasso (drag sur zone vide) et Ctrl+Click pour sélectionner/déplacer plusieurs images ensemble
 - **Frames** — zones englobantes avec titre et commentaire, permettant de regrouper visuellement des images (type Figma/Miro)
-- **Offline first** — sauvegarde locale au format `.moody` (archive ZIP propriétaire)
+- **Offline first** — sauvegarde locale au format `.cim` (archive ZIP propriétaire)
 - **Mode connecté (LAN)** — détection automatique du serveur sur le réseau local, sync des boards partagées
 - **API REST scriptable** — consommable par des développeurs Python pour automatiser la création/modification de boards (documentée via Swagger/OpenAPI)
 - **Collaboration LAN** — système de tokens de session : avertissement si une board est déjà ouverte, choix de collaborer ou non
@@ -76,7 +76,7 @@ moodboard/
 | Spring Boot plutôt que Node | Dominant dans les ESN locales (Sopra, Capgemini, Inetum...) |
 | Konva.js pour le canvas | Spécialisé manipulation images, performant, bien documenté |
 | Monorepo | Permet à Claude Code de faire le lien back/front en une session |
-| Format `.moody` (ZIP) plutôt que SQLite/H2 | Un seul fichier portable, pas de BDD locale, lisible par l'API Python |
+| Format `.cim` (ZIP) plutôt que SQLite/H2 | Un seul fichier portable, pas de BDD locale, lisible par l'API Python |
 | Chemins réseau plutôt que copie d'images | Les images vivent sur le partage réseau du studio, le serveur ne stocke que les références |
 | Docker Compose pour le backend | Déploiement simple sur un serveur dédié LAN, reproductible |
 | Tokens de session plutôt qu'authentification | Pas de comptes utilisateurs, léger, adapté au réseau interne de confiance |
@@ -84,12 +84,12 @@ moodboard/
 
 ---
 
-## Format de Fichier `.moody`
+## Format de Fichier `.cim`
 
-Archive ZIP renommée en `.moody`, structure interne :
+Archive ZIP renommée en `.cim`, structure interne :
 
 ```
-monboard.moody  (= ZIP)
+monboard.cim  (= ZIP)
 ├── board.json          # transforms, positions, frames, métadonnées
 ├── keybindings.json    # config raccourcis du board (optionnel)
 └── images/
@@ -143,13 +143,13 @@ au fur et à mesure (Angular, Electron, Konva.js, Spring Boot, PostgreSQL).
 - **Fenêtre frameless** — `frame: false` dans `BrowserWindow` Electron. Zone de drag custom (`-webkit-app-region: drag`)
 - **Hotcorners/Hotedges** — détection position souris relative aux bords (zones de 10px)
 - **Raccourcis reconfigurables** — `keybindings.json` + `KeyBindingService` centralisé qui intercepte clavier et souris
-- **Format .moody** — lire/écrire via `jszip`. Sérialiser le state Konva en `board.json`, images embarquées dans le ZIP. À l'ouverture : dézipper en mémoire, reconstruire le canvas
+- **Format .cim** — lire/écrire via `jszip`. Sérialiser le state Konva en `board.json`, images embarquées dans le ZIP. À l'ouverture : dézipper en mémoire, reconstruire le canvas
 
 ### Backend (Spring Boot / Docker)
 - **Docker Compose** — le backend se déploie via `docker-compose up` (Spring Boot + PostgreSQL). Un seul fichier `docker-compose.yml` à la racine de `back/`
 - **Découverte LAN** — le serveur s'annonce sur le réseau local (mDNS ou broadcast UDP). Le client Electron scanne le LAN au démarrage et propose les serveurs disponibles. Possibilité de forcer le mode local (sans serveur)
 - **Tokens de session** — pas d'authentification utilisateur. Quand un client ouvre une board, il obtient un token de session. Si un autre client ouvre la même board, le serveur avertit les deux et propose la collaboration ou le mode lecture seule
 - **Chemins réseau** — en mode connecté, les images sont référencées par leur chemin réseau (ex: `\\serveur\partage\images\photo.jpg` ou `/mnt/studio/images/photo.jpg`). Le serveur ne stocke jamais les fichiers images, seulement les métadonnées et les chemins
-- **PostgreSQL** — stocke les métadonnées des boards (titre, participants, date de modification), les sessions actives, et les chemins vers les fichiers `.moody` sur le réseau
+- **PostgreSQL** — stocke les métadonnées des boards (titre, participants, date de modification), les sessions actives, et les chemins vers les fichiers `.cim` sur le réseau
 - **API scriptable** — endpoints REST pensés pour être consommés par des scripts Python : créer une board, ajouter des images par chemin, modifier des frames, exporter. Documenter chaque endpoint avec des exemples curl/Python
-- **Mode hybride** — le front fonctionne sans backend (save/open local en `.moody`). Le backend ajoute : partage LAN, API scriptable, historique, collaboration temps réel (évolution future)
+- **Mode hybride** — le front fonctionne sans backend (save/open local en `.cim`). Le backend ajoute : partage LAN, API scriptable, historique, collaboration temps réel (évolution future)

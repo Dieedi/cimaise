@@ -1,12 +1,12 @@
 spring:
   application:
-    name: moody-server
+    name: cimaise-server
 
   # JPA + PostgreSQL configuration
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:moody}
-    username: ${DB_USER:moody}
-    password: ${DB_PASSWORD:moody}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:cimaise}
+    username: ${DB_USER:cimaise}
+    password: ${DB_PASSWORD:cimaise}
 
   jpa:
     # Hibernate crée/met à jour les tables automatiquement au démarrage
@@ -35,5 +35,5 @@ springdoc:
     path: /swagger-ui
 
 # Chemin vers le dossier partagé (NAS simulé)
-moody:
+cimaise:
   shared-path: ${SHARED_PATH:/data/shared}

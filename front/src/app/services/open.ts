@@ -32,7 +32,7 @@ export class OpenService {
     const zip = await JSZip.loadAsync(data);
     const boardFile = zip.file('board.json');
     if (!boardFile) {
-      throw new Error('Invalid .moody file: missing board.json');
+      throw new Error('Invalid .cim file: missing board.json');
     }
 
     const boardJson = await boardFile.async('string');

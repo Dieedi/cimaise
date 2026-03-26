@@ -1,6 +1,6 @@
-# Guide Technique — Moody
+# Guide Technique — Cimaise
 
-Guide d'apprentissage progressif des frameworks utilisés dans le projet Moody.
+Guide d'apprentissage progressif des frameworks utilisés dans le projet Cimaise.
 Mis à jour au fil du développement.
 
 ---
@@ -15,7 +15,7 @@ Mis à jour au fil du développement.
 - [Raccourcis reconfigurables](#raccourcis-reconfigurables)
 - [Connexion front/back](#connexion-frontback)
 - [JavaScript — concepts clés](#javascript--concepts-clés)
-- [Générer un `.moody` en Python](#générer-un-moody-en-python)
+- [Générer un `.cim` en Python](#générer-un-cim-en-python)
 - [Spring Boot](#spring-boot)
 - [Docker Compose](#docker-compose)
 
@@ -67,7 +67,7 @@ front/
 - **Module vs Standalone** — Angular 21 utilise des composants **standalone** par défaut (pas besoin de NgModules)
 - **Injection de dépendances** — Angular instancie et injecte les services automatiquement via le constructeur ou `inject()`
 
-### Services Angular dans Moody
+### Services Angular dans Cimaise
 
 L'app est découpée en **services spécialisés**, chacun responsable d'une seule feature :
 
@@ -78,8 +78,8 @@ L'app est découpée en **services spécialisés**, chacun responsable d'une seu
 | `PanService` | Déplacement du canvas au clic molette |
 | `DropService` | Drag & drop de fichiers images depuis l'OS |
 | `SelectionService` | Sélection clic, Ctrl+clic, lasso (box select) + Transformer |
-| `SaveService` | Sauvegarde au format `.moody` (ZIP avec images embarquées) |
-| `OpenService` | Ouverture d'un fichier `.moody` (dézip, migration, reconstruction canvas) |
+| `SaveService` | Sauvegarde au format `.cim` (ZIP avec images embarquées) |
+| `OpenService` | Ouverture d'un fichier `.cim` (dézip, migration, reconstruction canvas) |
 | `FrameService` | Création, redimensionnement, attachement d'images aux frames |
 | `ContextMenuService` | Gestion de l'affichage et du contenu des menus clic droit |
 | `KeyBindingService` | Registre centralisé des raccourcis clavier et souris, reconfigurables |
@@ -495,7 +495,7 @@ Cela permet à l'utilisateur de remapper le pan sur le clic gauche et la sélect
 
 ### Principe : offline-first
 
-L'app fonctionne **à 100% sans serveur** (save/open local en `.moody`). Le backend est optionnel et ajoute : partage LAN, API scriptable, collaboration.
+L'app fonctionne **à 100% sans serveur** (save/open local en `.cim`). Le backend est optionnel et ajoute : partage LAN, API scriptable, collaboration.
 
 ### ApiService
 
@@ -513,8 +513,8 @@ Au démarrage, l'app tente de joindre le serveur :
 ```ts
 // Dans ngAfterViewInit()
 this.apiService.tryConnect().then(connected => {
-  if (connected) console.log('[Moody] Connected to server');
-  else console.log('[Moody] No server found — offline mode');
+  if (connected) console.log('[Cimaise] Connected to server');
+  else console.log('[Cimaise] No server found — offline mode');
 });
 ```
 
@@ -616,14 +616,14 @@ const files = e.dataTransfer?.files;  // undefined si dataTransfer est null/unde
 
 ---
 
-## Format `.moody` — Sauvegarde et ouverture
+## Format `.cim` — Sauvegarde et ouverture
 
 ### Principe
 
-Un fichier `.moody` est une archive **ZIP renommée**. Dedans :
+Un fichier `.cim` est une archive **ZIP renommée**. Dedans :
 
 ```
-monboard.moody  (= ZIP)
+monboard.cim  (= ZIP)
 ├── board.json          # état du canvas + métadonnées des images
 └── images/
     ├── img_0.png       # images embarquées (données brutes)
@@ -684,18 +684,18 @@ const blob = await zip.file('images/img_0.png')!.async('blob');
 
 ---
 
-## Générer un `.moody` en Python
+## Générer un `.cim` en Python
 
 ### Principe
 
-Le format `.moody` est un **ZIP standard** — n'importe quel langage capable de créer un ZIP peut générer un board. Pas besoin du backend ni d'Electron : un script Python peut produire un fichier `.moody` prêt à l'emploi.
+Le format `.cim` est un **ZIP standard** — n'importe quel langage capable de créer un ZIP peut générer un board. Pas besoin du backend ni d'Electron : un script Python peut produire un fichier `.cim` prêt à l'emploi.
 
-L'utilisateur n'a plus qu'à l'ouvrir dans Moody (Ctrl+O).
+L'utilisateur n'a plus qu'à l'ouvrir dans Cimaise (Ctrl+O).
 
 ### Format attendu
 
 ```
-monboard.moody  (= ZIP)
+monboard.cim  (= ZIP)
 ├── board.json
 └── images/
     ├── img_0.jpg
@@ -778,9 +778,9 @@ import json
 import os
 from PIL import Image  # pip install Pillow
 
-def create_moody(output_path, image_paths, title="Generated Board"):
+def create_cim(output_path, image_paths, title="Generated Board"):
     """
-    Generate a .moody file from a list of image paths.
+    Generate a .cim file from a list of image paths.
     Images are laid out in a grid, grouped in a single frame.
     """
     board_images = []
@@ -851,8 +851,8 @@ def create_moody(output_path, image_paths, title="Generated Board"):
 
 
 # Usage
-create_moody(
-    "references.moody",
+create_cim(
+    "references.cim",
     ["photo1.jpg", "photo2.png", "concept_art.jpg"],
     title="Visual References"
 )
@@ -865,7 +865,7 @@ Si les dimensions des images sont connues à l'avance :
 ```python
 import zipfile, json
 
-with zipfile.ZipFile("simple.moody", "w") as zf:
+with zipfile.ZipFile("simple.cim", "w") as zf:
     # Embed one image
     zf.write("my_image.jpg", "images/img_0.jpg")
 
@@ -910,8 +910,8 @@ Spring Boot est un framework Java qui simplifie la création d'applications web.
 ### Structure du projet
 
 ```
-back/src/main/java/com/moody/
-├── MoodyApplication.java          # Point d'entrée
+back/src/main/java/com/cimaise/
+├── CimaiseApplication.java          # Point d'entrée
 ├── config/
 │   └── CorsConfig.java            # Configuration CORS
 ├── board/                          # Domaine Board
@@ -936,14 +936,14 @@ Chaque domaine suit la même architecture en couches : **Controller → Service 
 ```java
 @SpringBootApplication
 @EnableScheduling
-public class MoodyApplication {
+public class CimaiseApplication {
     public static void main(String[] args) {
-        SpringApplication.run(MoodyApplication.class, args);
+        SpringApplication.run(CimaiseApplication.class, args);
     }
 }
 ```
 
-- `@SpringBootApplication` — combine 3 annotations : `@Configuration` (peut définir des beans), `@EnableAutoConfiguration` (config auto), `@ComponentScan` (scanne `com.moody.*` pour trouver les `@Service`, `@Controller`, etc.)
+- `@SpringBootApplication` — combine 3 annotations : `@Configuration` (peut définir des beans), `@EnableAutoConfiguration` (config auto), `@ComponentScan` (scanne `com.cimaise.*` pour trouver les `@Service`, `@Controller`, etc.)
 - `@EnableScheduling` — active les méthodes `@Scheduled` (utilisé pour le nettoyage automatique des sessions mortes)
 
 ### Architecture en couches
@@ -976,7 +976,7 @@ public class Board {
     private String title;
 
     @Column(name = "file_path", nullable = false, unique = true)
-    private String filePath;      // Chemin vers le .moody sur le réseau
+    private String filePath;      // Chemin vers le .cim sur le réseau
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -1265,9 +1265,9 @@ public class CorsConfig {
 ```yaml
 spring:
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:moody}
-    username: ${DB_USER:moody}
-    password: ${DB_PASSWORD:moody}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:cimaise}
+    username: ${DB_USER:cimaise}
+    password: ${DB_PASSWORD:cimaise}
   jpa:
     hibernate:
       ddl-auto: update           # Crée/modifie les tables automatiquement au démarrage
@@ -1280,7 +1280,7 @@ springdoc:                       # Swagger UI
   swagger-ui:
     path: /swagger-ui            # Accessible à /swagger-ui/index.html
 
-moody:
+cimaise:
   session:
     timeout-seconds: 30          # Timeout session sans heartbeat
     cleanup-interval-ms: 60000   # Fréquence du nettoyage automatique
@@ -1311,15 +1311,15 @@ services:
   db:                                    # Container PostgreSQL
     image: postgres:17
     environment:
-      POSTGRES_DB: moody
-      POSTGRES_USER: moody
-      POSTGRES_PASSWORD: moody
+      POSTGRES_DB: cimaise
+      POSTGRES_USER: cimaise
+      POSTGRES_PASSWORD: cimaise
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data  # Données persistantes
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U moody"]
+      test: ["CMD-SHELL", "pg_isready -U cimaise"]
       interval: 5s
 
   api:                                   # Container Spring Boot
@@ -1332,9 +1332,9 @@ services:
     environment:
       DB_HOST: db                        # "db" = nom du container PostgreSQL
       DB_PORT: 5432
-      DB_NAME: moody
-      DB_USER: moody
-      DB_PASSWORD: moody
+      DB_NAME: cimaise
+      DB_USER: cimaise
+      DB_PASSWORD: cimaise
       SHARED_PATH: /data/shared
     volumes:
       - ./shared:/data/shared            # Simule le NAS partagé

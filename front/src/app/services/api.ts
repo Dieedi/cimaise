@@ -9,11 +9,11 @@ const API_CONFIG = appConfig.api;
  * ApiService: manages the connection to the backend server.
  *
  * Two modes:
- * - Disconnected (default): the app works fully offline with local .moody files
+ * - Disconnected (default): the app works fully offline with local .cim files
  * - Connected: shows server status in the context menu
  *
  * The backend API is primarily designed for external consumers (Python scripts)
- * to create boards, add images/frames, and export .moody files programmatically.
+ * to create boards, add images/frames, and export .cim files programmatically.
  *
  * Angular's HttpClient returns Observables (RxJS). We use firstValueFrom() to convert
  * them to Promises — simpler for one-shot requests like REST calls.

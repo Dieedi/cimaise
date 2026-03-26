@@ -5,9 +5,9 @@
         "healthEndpoint": "/actuator/health"
     },
     "save": {
-        "defaultFilename": "my_board.moody",
-        "fileExtension": "moody",
-        "fileTypeName": "Moody Board",
+        "defaultFilename": "my_board.cim",
+        "fileExtension": "cim",
+        "fileTypeName": "Cimaise Board",
         "formatVersion": "1.2"
     }
 }

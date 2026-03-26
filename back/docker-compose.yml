@@ -4,16 +4,16 @@ services:
   db:
     image: postgres:17
     environment:
-      POSTGRES_DB: moody
-      POSTGRES_USER: moody
-      POSTGRES_PASSWORD: moody
+      POSTGRES_DB: cimaise
+      POSTGRES_USER: cimaise
+      POSTGRES_PASSWORD: cimaise
     ports:
       - "5432:5432"
     volumes:
       # Volume nommé = les données persistent même si le container est recréé
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U moody"]
+      test: ["CMD-SHELL", "pg_isready -U cimaise"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -26,9 +26,9 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: 5432
-      DB_NAME: moody
-      DB_USER: moody
-      DB_PASSWORD: moody
+      DB_NAME: cimaise
+      DB_USER: cimaise
+      DB_PASSWORD: cimaise
       SHARED_PATH: /data/shared
     volumes:
       # Monte le dossier local shared/ dans le container (simule le NAS)
