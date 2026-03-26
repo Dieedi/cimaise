@@ -9,8 +9,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "electron:dev": "concurrently \"ng serve\" \"wait-on http://localhost:4200 && electron .\"",
-    "electron:build": "ng build --base-href ./ && electron-builder --win",
-    "electron:build:dir": "ng build --base-href ./ && electron-builder --win --dir"
+    "electron:build": "ng build --base-href ./ && electron-builder",
+    "electron:build:dir": "ng build --base-href ./ && electron-builder --dir"
   },
   "main": "electron/main.js",
   "private": true,
@@ -33,6 +33,16 @@
     "win": {
       "target": "portable",
       "icon": "public/icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/icon.png",
+      "category": "public.app-category.graphics-design"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "public/icon.png",
+      "category": "Graphics"
     }
   },
   "packageManager": "npm@10.9.2",
