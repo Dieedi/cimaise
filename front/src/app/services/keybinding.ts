@@ -132,7 +132,7 @@ export class KeyBindingService {
   }
 
   /** Get the display label for a shortcut (e.g. "Ctrl+S") */
-  public getShortcutLabel(action: string): string {
+  private getShortcutLabel(action: string): string {
     const binding = this.bindings.get(action);
     if (!binding) return '';
     return this.formatBinding(binding);

@@ -33,10 +33,6 @@ export class SaveService {
     this.currentFilePath = path;
   }
 
-  /** Get the current file path */
-  public getFilePath(): string | null {
-    return this.currentFilePath;
-  }
 
   /** Save: write silently to current path, or show dialog if no path yet */
   public async save() {

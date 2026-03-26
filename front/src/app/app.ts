@@ -11,7 +11,7 @@ import { OpenService } from './services/open';
 import { FrameService } from './services/frame';
 import { ContextMenuService, MenuItem } from './services/context-menu';
 import { KeyBindingService, BindingEntry } from './services/keybinding';
-import { ApiService } from './services/api';
+
 
 @Component({
   selector: 'app-root',
@@ -52,7 +52,6 @@ export class App implements AfterViewInit{
     private frameService: FrameService,
     public contextMenu: ContextMenuService,
     private keybinding: KeyBindingService,
-    public apiService: ApiService,
     private cdr: ChangeDetectorRef,
   ) {}
   private get stage(): Konva.Stage{
@@ -61,12 +60,6 @@ export class App implements AfterViewInit{
 
   /** Initialize the Konva stage, layer, and all canvas interactions */
   ngAfterViewInit(): void {
-    // Try to connect to the backend server
-    this.apiService.tryConnect().then(connected => {
-      if (connected) console.log('[Moody] Connected to server');
-      else console.log('[Moody] No server found — offline mode');
-      this.cdr.detectChanges();
-    });
     // get DOM
     const container = this.containerRef.nativeElement;
 
@@ -319,10 +312,6 @@ export class App implements AfterViewInit{
       { type: 'action', label: 'Focus All', action: () => this.focusAll() },
       { type: 'separator' },
       { type: 'action', label: 'Keybindings', action: () => this.openKeybindingsPanel() },
-      { type: 'separator' },
-      this.apiService.connected
-        ? { type: 'action', label: '● Server Connected', color: '#4ade80', action: () => { this.apiService.disconnect(); this.cdr.detectChanges(); } }
-        : { type: 'action', label: '○ Offline mode', action: () => this.apiService.tryConnect().then(() => this.cdr.detectChanges()) },
       { type: 'separator' },
       { type: 'action', label: 'Close', action: () => window.close() },
     ];

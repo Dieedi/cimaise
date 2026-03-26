@@ -37,15 +37,6 @@ export class SelectionService {
     );
   }
 
-  /** Get all selected nodes (images + frames) */
-  public getSelected(): Konva.Node[] {
-    return [...this.selectedNodes];
-  }
-
-  /** Check if a node is selected */
-  public isSelected(node: Konva.Node): boolean {
-    return this.selectedNodes.includes(node);
-  }
 
   init(): void {
     this.transformer = new Konva.Transformer({

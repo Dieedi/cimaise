@@ -44,8 +44,5 @@ export class ApiService {
     }
   }
 
-  /** Disconnect from server */
-  disconnect(): void {
-    this._connected = false;
-  }
+
 }

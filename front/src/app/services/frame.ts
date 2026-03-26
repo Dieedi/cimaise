@@ -35,7 +35,7 @@ let frameCounter = 0;
 })
 export class FrameService {
   private frames: Konva.Group[] = [];
-  private selectedFrame: Konva.Group | null = null;
+
   private children: Map<string, Konva.Node[]> = new Map();
   private titles: Map<string, Konva.Text> = new Map();
   private titlesOverlay!: Konva.Group;
@@ -311,7 +311,6 @@ export class FrameService {
     this.frames = [];
     this.children.clear();
     this.titles.clear();
-    this.selectedFrame = null;
   }
 
   // Delete a frame only, detaching its children
@@ -319,9 +318,6 @@ export class FrameService {
     const index = this.frames.indexOf(frame);
     if (index === -1) return;
 
-    if (this.selectedFrame === frame) {
-      this.selectedFrame = null;
-    }
     // Remove title from overlay
     const title = this.titles.get(frame.id());
     if (title) title.destroy();
@@ -340,32 +336,6 @@ export class FrameService {
     this.deleteFrame(frame);
   }
 
-  public selectFrame(group: Konva.Group): void {
-    if (this.selectedFrame && this.selectedFrame !== group) {
-      this.clearFrameSelection();
-    }
-    this.selectedFrame = group;
-    const bg = group.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
-    if (bg) {
-      bg.stroke(FRAME.borderHighlightColor);
-      bg.strokeWidth(2);
-    }
-  }
-
-  public clearFrameSelection(): void {
-    if (this.selectedFrame) {
-      const bg = this.selectedFrame.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
-      if (bg) {
-        bg.stroke(FRAME.borderColor);
-        bg.strokeWidth(FRAME.borderWidth);
-      }
-    }
-    this.selectedFrame = null;
-  }
-
-  public getSelectedFrame(): Konva.Group | null {
-    return this.selectedFrame;
-  }
 
   public getFrames(): Konva.Group[] {
     return this.frames;
@@ -504,12 +474,10 @@ export class FrameService {
       bg.stroke(FRAME.borderHighlightColor);
     } else {
       container.style.cursor = 'default';
-      // Reset non-selected frame borders
+      // Reset frame borders
       this.frames.forEach(frame => {
-        if (frame !== this.selectedFrame) {
-          const bg = frame.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
-          bg.stroke(FRAME.borderColor);
-        }
+        const bg = frame.findOne(`.${NODE_NAME.BG}`) as Konva.Rect;
+        bg.stroke(FRAME.borderColor);
       });
     }
   }

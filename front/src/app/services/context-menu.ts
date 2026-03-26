@@ -16,7 +16,6 @@ export interface MenuItem {
   onPick?: (color: string) => void;
 }
 
-export type ContextType = 'canvas' | 'image' | 'frame';
 
 @Injectable({
   providedIn: 'root',
